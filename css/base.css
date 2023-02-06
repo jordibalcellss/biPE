@@ -1,0 +1,89 @@
+* { margin: 0; padding: 0; }
+html, body { height: 100%; }
+body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 14px; font-weight: 400; text-align: left; margin-left: 50px; }
+
+div#login { margin-top: 50px; }
+div#login h1 { margin-bottom: 18px; }
+
+form #messages { margin-top: 15px; line-height: 18px; }
+
+input.shorter { width: 80px; }
+input.short { width: 135px; }
+input.long { width: 210px; }
+
+input[type="text"], input[type="password"], select {
+  padding: 4px 4px 4px 6px;
+  margin-top: 4px;
+  margin-bottom: 10px;
+  border-radius: 2px;
+}
+
+input[type="submit"] {
+  padding: 3px 11px;
+  margin-top: 10px;
+  margin-right: 10px;
+  border-radius: 4px;
+  font-weight: 800;
+}
+
+input[type="checkbox"] { margin-top: 3px; margin-right: 6px; margin-bottom: 20px; }
+
+div.not-editable-form-item { margin-bottom: 11px; }
+
+ul#unsaved-records { margin: 16px 0; list-style-type: none; }
+ul#unsaved-records li { margin-bottom: 8px; }
+ul#unsaved-records li:before { content: "→ "; }
+
+div#sec-menu { margin-bottom: 35px; }
+
+h2, h3, h4 { margin-bottom: 18px; }
+
+table { margin-bottom: 12px; }
+table.separated { margin-top: 35px; }
+
+th, td { padding-bottom: 8px; }
+th { padding-bottom: 12px; }
+
+span.code-p {
+  padding: 3px 4px 1px 5px;
+  margin-right: 2px;
+  border-radius: 3px;
+}
+
+span.code-h3 {
+  padding: 4px 6px 2px 6px;
+  margin-right: 3px;
+  border-radius: 3px;
+}
+
+div.box-year { padding-bottom: 30px; }
+div.box-year h1 { padding-top: 5px; padding-bottom: 5px; font-size: 16px; }
+div.box-year ul { margin: 5px 0; list-style-type: none; }
+div.box-year ul li { margin-bottom: 6px; }
+
+div.box-number { margin-top: 20px; }
+div.box-number h1 { font-size: 14px; font-weight: 400; padding: 8px 0; }
+div.box-number span { font-size: 48px; }
+
+div#trunk { width: 900px; min-height: 100%; height: auto !important; height: 100%; margin-bottom: -37px; }
+div#head { margin-bottom: 50px; padding-top: 20px; }
+div#base, .push { height: 37px; }
+.push { padding-top: 60px; }
+
+div.one-third { width: 280px; margin-left: 10px; margin-right: 10px; display: inline; float: left; position: relative; }
+div.two-thirds { width: 580px; margin-left: 10px; margin-right: 10px; display: inline; float: left; position: relative; }
+
+div.push-one-third { position: relative; left: 300px; }
+div.push-two-thirds { position: relative; left: 600px; }
+
+div.alpha { margin-left: 0; }
+div.omega { margin-right: 0; }
+
+.clear {
+  clear: both;
+  display: block;
+  overflow: hidden;
+  visibility: hidden;
+  width: 0;
+  height: 0;
+}

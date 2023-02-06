@@ -1,0 +1,30 @@
+body { color: #ccc; background-color: #222; }
+
+a { color: #6af; }
+
+input[type="text"], input[type="password"], select {
+  border: 1px #777 solid;
+  background: #333;
+  color: #ccc;
+}
+
+input[type="submit"] {
+  border: 1px #777 solid;
+  background: #333;
+  color: #ccc;
+}
+
+div.not-editable-form-item { color: #777; }
+
+span.greyed-out { color: #666; }
+
+span.code-p, span.code-h3 {
+  border: 1px #555 solid;
+  background: #333;
+}
+
+span.code-h3 {
+  border: 1px #666 solid;
+}
+
+div.box-year { border-top: 1px #777 solid; }
