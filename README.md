@@ -1,6 +1,6 @@
 # biPE
 
-timesheet and project reporting web application.
+A timesheet and project reporting web application.
 
 ## Description
 
