@@ -16,7 +16,7 @@ input[type="submit"] {
 
 div.not-editable-form-item { color: #777; }
 
-span.greyed-out { color: #666; }
+span.greyed-out, p.advice { color: #666; }
 
 span.code-p, span.code-h3 {
   border: 1px #555 solid;
@@ -27,4 +27,6 @@ span.code-h3 {
   border: 1px #666 solid;
 }
 
-div.box-year { border-top: 1px #777 solid; }
+div.box-year, div.box-client { border-top: 1px #777 solid; }
+
+form#expenses { border-right: 1px #777 solid; }

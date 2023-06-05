@@ -36,7 +36,7 @@ The configuration keys in regards of the database connection can be found in `co
 
 | Setting | Description |
 | - | - |
-| `MODE` | Switches from *light* to *dark* CSS style |
+| `MODE` | Switches from *bright* to *dark* CSS style |
 | `LOGGING` | Activates a pair of access logfiles under *log/* |
 | `LDAP_AUTH_GROUP` | Establishes the group of users that can access biPE |
 

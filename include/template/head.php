@@ -12,5 +12,5 @@
   <body>
     <div id="trunk">
       <div id="head">
-        <span><?=greeting?>, <?=$_SESSION['id']?>! - <a href="?module=log"><?=log_time?></a> - <a href="?module=timesheet"><?=my_timesheet?></a> - <a href="?module=tasks"><?=tasks?></a> - <a href="login.php?action=logout"><?=logout?></a></span>
+        <?=printMenu()?>
       </div>

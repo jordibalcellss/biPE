@@ -20,9 +20,12 @@ define('DB_PASS','mysql');
 
 //LDAP
 define('LDAP_TREE','dc=laptop,dc=local');
+define('LDAP_USER','cn=ldapadm,'.LDAP_TREE);
 define('LDAP_HOST','localhost');
-define('LDAP_AUTH_GROUP','cn=tech,ou=groups,'.LDAP_TREE);
-define('LDAP_ADMIN_GROUP','cn=common,ou=groups,'.LDAP_TREE);
+define('LDAP_PASS','testldap');
+define('LDAP_AUTH_ADMIN_GROUP','tech');
+define('LDAP_AUTH_ACCOUNTANT_GROUP','accounts');
+define('LDAP_AUTH_EMPLOYEE_GROUP','engineers');
 
 //PHP
 define('DISPLAY_ERRORS',true);

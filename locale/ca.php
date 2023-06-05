@@ -13,13 +13,16 @@ define("logged_in","autenticat");
 define("greeting","hola");
 define("logout","tanca la sessió");
 
-define("log_time","registra");
-define("my_timesheet","el meu temps");
+define("log","registra temps");
+define("bulk_log","registra temps en massa");
+define("timesheet","el meu temps");
 define("tasks","projectes");
 define("clients","clients");
 define("client","client");
 define("accounting","comptable");
 define("phases","previsió");
+define("expenses","despeses");
+define("invoicing","facturació");
 
 define("log_task","registra");
 define("log_discard","descarta");
@@ -34,6 +37,7 @@ define("task_off_sick","malaltia/metge");
 define("task_leave","baixa");
 
 define("hours","h");
+define("hours_word","hores");
 define("remaining","restants");
 define("spent","dedicades");
 define("task","projecte");
@@ -54,6 +58,8 @@ define("status","estat");
 define("add","afegeix");
 define("manage","gestiona");
 define("details","detalls");
+define("personal_expenses","despeses personals");
+define("declare_personal_expenses","declara ".personal_expenses);
 
 define("address","adreça");
 define("city","població");
@@ -65,9 +71,12 @@ define("phone","telèfon");
 define("save","desa");
 define("name_cannot_be_empty","el nom no pot ser pas buit");
 define("amount_cannot_be_empty","l'import no pot ser pas buit");
+define("value_cannot_be_empty","el valor no pot ser pas buit");
 define("date_cannot_be_empty","la data no pot ser pas buida");
+define("description_cannot_be_empty","la descripció no pot ser pas buida");
 define("edit_success","s'ha editat correctament");
 define("add_success","s'ha afegit correctament");
+define("remove_success","s'ha eliminat correctament");
 define("back","torna");
 define("is_free_software","és programari lliure");
 
@@ -84,12 +93,14 @@ define("description","descripció");
 define("amount","import");
 define("quotation","honoraris/pressupost");
 define("invoice","factura");
-define("settled","liquidat");
+define("sent","enviada");
+define("settled","liquidada");
 define("nature","tipus");
 define("income","ingrés");
 define("expense","despesa");
 define("no","no");
 define("yes","sí");
+define("who","qui");
 
 define("estimated_income","pressupostat a favor");
 define("estimated_expense","pressupostat en contra");
@@ -98,6 +109,20 @@ define("invoiced_income","facturat a favor");
 define("invoiced_expense","facturat en contra");
 define("revenue","rendiment");
 define("settled_income","cobrat");
-define("settled_expense","pagat")
+define("settled_expense","pagat");
+
+define("value","valor");
+define("mileage","km");
+define("mileage_value","recompte de quilometratge");
+define("receipt","rebut");
+define("receipt_value","valor d'un rebut");
+define("paid_back","retornat");
+
+define("bulk_log_advice","tingueu en compte que el temps afegit amb aquest
+formulari s'anota amb la data d'avui (o bé la data del darrer registre, si n'hi
+ha)<br/><br/>es pot introduir fins a 1000 hores cada vegada");
+
+define("bulk_log_excess","admet fins a 999 hores cada volta");
+define("are_now_orphans","són ara orfes");
 
 ?>

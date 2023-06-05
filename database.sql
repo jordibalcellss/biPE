@@ -32,6 +32,7 @@ CREATE TABLE IF NOT EXISTS invoices (
   description VARCHAR(50),
   nature ENUM('i','e'),
   day DATE NOT NULL,
+  sent TINYINT(1) DEFAULT 0,
   settled TINYINT(1) DEFAULT 0,
   PRIMARY KEY (id)
 );
@@ -59,12 +60,25 @@ CREATE TABLE IF NOT EXISTS time_log (
   user_id VARCHAR(20) NOT NULL,
   task_id INT NOT NULL,
   day DATE NOT NULL,
-  duration DECIMAL(4,2),
+  duration DECIMAL(5,2),
   saved TINYINT(1) DEFAULT 0,
   PRIMARY KEY (id)
 );
 
-INSERT INTO tasks (id,code,category_id,client_id,name,rate,active,readonly) VALUES
+CREATE TABLE IF NOT EXISTS expenses_reclaim (
+  id INT NOT NULL AUTO_INCREMENT,
+  user_id VARCHAR(20) NOT NULL,
+  task_id INT NOT NULL,
+  amount DECIMAL(5,2) NOT NULL,
+  description VARCHAR(50),
+  nature ENUM('m','r'), -- mileage/receipt
+  day DATE NOT NULL,
+  paid_back TINYINT(1) DEFAULT 0,
+  PRIMARY KEY (id)
+);
+
+INSERT INTO tasks (id,code,category_id,client_id,name,rate,active,readonly)
+  VALUES
   (1,null,null,null,null,null,1,1), -- weekend/nothing
   (2,null,null,null,null,null,1,1), -- holiday
   (3,null,null,null,null,null,1,1), -- off sick
@@ -96,7 +110,8 @@ INSERT INTO invoices (task_id,amount,description,settled,nature,day) VALUES
 
 INSERT INTO clients (name,address,city,postcode,vat_code,email) VALUES
   ('Desenvolupaments Pons','11 Ronda Pedrolo','Palma','PA1 3FH','112358',null),
-  ('Mulberry Trench S. Ltda.','1180 Av. de la independència','Barcelona','B15 AZ1','132134','info@multrench.com');
+  ('Mulberry Trench S. Ltda.','1180 Av. de la independència','Barcelona',
+    'B15 AZ1','132134','info@multrench.com');
 
 INSERT INTO time_log (user_id,task_id,day,duration,saved) VALUES
   ('jordi.bs',2,'20210801',8,1),
@@ -119,6 +134,12 @@ INSERT INTO time_log (user_id,task_id,day,duration,saved) VALUES
   ('jordi.bs',4,'20221117',null,1),
   ('jordi.bs',4,'20221118',null,1),
   ('jordi.bs',4,'20221119',null,1);
+
+INSERT INTO expenses_reclaim (user_id,task_id,amount,description,nature,day)
+  VALUES
+  ('jordi.bs',11,94.00,'viatge a lleida km','m','2023-03-01'),
+  ('jordi.bs',11,12.50,'dinar a mataró','r','2023-03-01'),
+  ('jordi.bs',13,9.00,'transport eines al polígon','m','2023-03-15');
   
 INSERT INTO categories (id,name) VALUES
   (1,'obra nova'),

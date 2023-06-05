@@ -39,12 +39,16 @@ if ($_POST) {
     $db = new DB();
     if ($_GET['type'] == 'quotation') {
       if ($_GET['action'] == 'edit') {
-        $stmt = $db->prepare('UPDATE quotations SET description=?, amount=?, nature=?, day=? WHERE id=?');
-        $stmt->execute(array(trim($_POST['description']), $amount, $_POST['nature'], $day, $_GET['id']));
+        $stmt = $db->prepare('UPDATE quotations SET description=?, amount=?,
+          nature=?, day=? WHERE id=?');
+        $stmt->execute(array(trim($_POST['description']), $amount,
+          $_POST['nature'], $day, $_GET['id']));
       }
       else {
-        $stmt = $db->prepare('INSERT INTO quotations (task_id, description, amount, nature, day) VALUES (?, ?, ?, ?, ?)');
-        $stmt->execute(array($task_id, trim($_POST['description']), $amount, $_POST['nature'], $day));     
+        $stmt = $db->prepare('INSERT INTO quotations (task_id, description,
+          amount, nature, day) VALUES (?, ?, ?, ?, ?)');
+        $stmt->execute(array($task_id, trim($_POST['description']), $amount,
+          $_POST['nature'], $day));     
       }
     }
     else {
@@ -54,13 +58,23 @@ if ($_POST) {
       else {
         $settled = 1;
       }
-      if ($_GET['action'] == 'edit') {
-        $stmt = $db->prepare('UPDATE invoices SET description=?, amount=?, settled=?, nature=?, day=? WHERE id=?');
-        $stmt->execute(array(trim($_POST['description']), $amount, $settled, $_POST['nature'], $day, $_GET['id']));
+      if (!isset($_POST['sent'])) {
+        $sent = 0;
       }
       else {
-        $stmt = $db->prepare('INSERT INTO invoices (task_id, description, amount, settled, nature, day) VALUES (?, ?, ?, ?, ?, ?)');
-        $stmt->execute(array($_GET['id'], trim($_POST['description']), $amount, $settled, $_POST['nature'], $day));
+        $sent = 1;
+      }
+      if ($_GET['action'] == 'edit') {
+        $stmt = $db->prepare('UPDATE invoices SET description=?, amount=?,
+          sent=?, settled=?, nature=?, day=? WHERE id=?');
+        $stmt->execute(array(trim($_POST['description']), $amount, $sent,
+          $settled, $_POST['nature'], $day, $_GET['id']));
+      }
+      else {
+        $stmt = $db->prepare('INSERT INTO invoices (task_id, description,
+          amount, sent, settled, nature, day) VALUES (?, ?, ?, ?, ?, ?, ?)');
+        $stmt->execute(array($_GET['id'], trim($_POST['description']), $amount,
+          $sent, $settled, $_POST['nature'], $day));
       }
     }
     if ($stmt->rowCount() == 1) {
@@ -80,13 +94,19 @@ if ($_GET['action'] == 'edit') {
   $stmt->execute(array($_GET['id']));
   $document = $stmt->fetch(PDO::FETCH_NUM);
   $id = $document[0];
-  $amount = formatNumberP($document[2], false);
+  $amount = formatNumberP($document[2]);
   if ($_GET['type'] == 'invoice') {
     if ($document[6] == 1) {
-      $checked = ' checked';
+      $sent_checked = ' checked';
     }
     else {
-      $checked = '';
+      $sent_checked = '';
+    }
+    if ($document[7] == 1) {
+      $settled_checked = ' checked';
+    }
+    else {
+      $settled_checked = '';
     }
   }
   if ($document[4] == 'i') {
@@ -101,10 +121,11 @@ if ($_GET['action'] == 'edit') {
 }
 else {
   $action = add;
-  for ($i = 0; $i <= 4; $i++) {
+  for ($i = 0; $i <= 5; $i++) {
     $document[$i] = '';
   }
-  $checked = '';
+  $sent_checked = '';
+  $settled_checked = '';
   $amount = '';
   $income_selected = ' selected';
   $expense_selected = '';
@@ -116,7 +137,9 @@ else {
       <h2><?=accounting?></h2>
       <h3><?=getTaskName($task_id, 'h3')?></h3>
       <h4><?=$action?> <?=$type?></h4>
-      <form id="accounting" enctype="application/x-www-form-urlencoded" method="post" action="index.php?module=accounting&action=<?=$_GET['action']?>&id=<?=$id?>&type=<?=$_GET['type']?>">
+      <form id="accounting" enctype="application/x-www-form-urlencoded"
+        method="post" action="index.php?module=accounting&action=<?=$_GET['action']?>&id=<?=$id?>&type=<?=$_GET['type']?>">
+
         <div><label for="nature"><?=nature?></label></div>
         <div><select name="nature">
           <option value="i"<?=$income_selected?>><?=income?></option>
@@ -124,16 +147,24 @@ else {
         </select></div>
 
         <div><label for="description"><?=description?></label></div>
-        <div><input name="description" type="text" class="long" value="<?=$document[3]?>" /></div>
+        <div><input name="description" type="text" class="long"
+          value="<?=$document[3]?>" /></div>
 
         <div><label for="day"><?=date?>*</label></div>
-        <div><input name="day" type="text" class="shorter" value="<?=$day->format('d-m-Y')?>" /></div>
+        <div><input name="day" type="text" class="shorter"
+          value="<?=$day->format('d-m-Y')?>" /></div>
 
         <div><label for="amount"><?=amount?>*</label></div>
-        <div><input name="amount" type="text" class="shorter" value="<?=$amount?>" /></div>
+        <div><input name="amount" type="text" class="shorter"
+          value="<?=$amount?>" /></div>
 <?php
 if ($_GET['type'] == 'invoice') {
-  echo "\n".'        <div><input name="settled" type="checkbox" value="'.$document[4].'"'.$checked.' /><label for="settled">'.settled."</label></div>\n";
+  echo "\n".'        <div><input name="sent" type="checkbox"
+    value="'.$document[4].'"'.$sent_checked.' /><label for="sent">'.sent.
+    "</label></div>\n";
+  echo "\n".'        <div><input name="settled" type="checkbox"
+    value="'.$document[5].'"'.$settled_checked.' /><label for="settled">'.
+      settled."</label></div>\n";
 }
 ?>
 

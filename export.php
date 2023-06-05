@@ -36,7 +36,7 @@ header('Content-Disposition: attachment; filename='.$_SESSION['id'].'.csv');
 
 foreach ($records as $record) {
   if ($record['duration'] > 0) {
-    $duration = formatNumberP($record['duration'], false);
+    $duration = formatNumberP($record['duration']);
   }
   else {
     $duration = '';

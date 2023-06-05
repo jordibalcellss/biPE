@@ -1,23 +1,35 @@
-      <div class="two-thirds">
-        two-thirds
+      <div class="one-quarter alpha">
+        one-quarter
       </div>
-      <div class="one-third">
-        one-third
+      <div class="three-quarters">
+        three-quarters
       </div>
-      <div class="one-third">
-        one-third
+      <div class="two-quarters alpha">
+        two-quarters
       </div>
-      <div class="one-third">
-        one-third
+      <div class="two-quarters">
+        two-quarters
       </div>
-      <div class="one-third">
-        one-third
+      <div class="one-quarter alpha">
+        one-quarter
       </div>
-      <div class="push-two-thirds one-third">
-        push-two-thirds one-third
+      <div class="one-quarter">
+        one-quarter
+      </div>
+      <div class="one-quarter">
+        one-quarter
+      </div>
+      <div class="one-quarter">
+        one-quarter
+      </div>
+      <div class="push-two-quarters two-quarters alpha">
+        push-two-quarters two-quarters
+      </div>
+      <div class="push-one-quarter three-quarters alpha">
+        push-one-quarter three-quarters
       </div>
       <div class="clear"></div>
-      <div class="push-one-third two-thirds">
-        push-one-third two-thirds
+      <div class="push-three-quarters one-quarter alpha">
+        push-three-quarters one-quarter
       </div>
       

@@ -39,6 +39,74 @@ function writeLog($filename, $message) {
   }
 }
 
+function getUserMembership($user_id) {
+  //returns an array of group names
+  $con = LDAPconnect();
+  $result = ldap_search($con[0],'ou=groups,'.LDAP_TREE,"(cn=*)",
+    array('cn','memberuid'));
+  $entries = ldap_get_entries($con[0],$result);
+  ldap_close($con[0]);
+  $groups = array();
+  for ($i = 0; $i < $entries['count']; $i++) {
+    if (isset($entries[$i]['memberuid'])) {
+      for ($j = 0; $j < $entries[$i]['memberuid']['count']; $j++) {
+        if ($entries[$i]['memberuid'][$j] == $user_id) {
+          $groups[] = $entries[$i]['cn'][0];
+          break;
+        }
+      }
+    }
+  }
+  return $groups;
+}
+
+function getRole($user_id) {
+  /*
+   * returns string or false if ambiguous, possible success values
+   * admin
+   * accountant
+   * employee
+   */
+  $groups = getUserMembership($user_id);
+  
+  if (in_array(LDAP_AUTH_ADMIN_GROUP, $groups)) {
+    return 'admin';
+  }
+  else if (in_array(LDAP_AUTH_ACCOUNTANT_GROUP, $groups)) {
+    return 'accountant';
+  }
+  else if (in_array(LDAP_AUTH_EMPLOYEE_GROUP, $groups)) {
+    return 'employee';
+  }
+  else {
+    return false;
+  }
+}
+
+function printMenu() {
+  //menu items depend on the role
+  $modules_admin = 'log timesheet expenses tasks';
+  $modules_accountant = 'expenses invoicing';
+  $modules_employee = 'log timesheet expenses';
+
+  $menu = '<span>'.greeting.', '.$_SESSION['id'].'! - ';
+  if ($_SESSION['role'] == 'admin') {
+    $modules = $modules_admin;
+  }
+  else if ($_SESSION['role'] == 'accountant') {
+    $modules = $modules_accountant;
+  }
+  else if ($_SESSION['role'] == 'employee') {
+    $modules = $modules_employee;
+  }
+
+  foreach (explode(' ', $modules) as $module) {
+    $menu .= "<a href=\"?module=$module\">".constant($module).'</a> - ';
+  }
+  $menu .= '- <a href="login.php?action=logout">'.logout.'</a></span>'."\n";
+  echo $menu;
+}
+
 function getTasks($filter) {
   /*
    * returns an array with the following attributes
@@ -54,13 +122,15 @@ function getTasks($filter) {
   else if ($filter == 'editable') {
     $cond = 'NOT readonly';
   }
+  $cond = $cond.' ORDER BY code DESC, name ASC, id DESC';
+
   $stmt = $db->prepare("SELECT id, code,
                         (CASE
                           WHEN id=1 THEN '".task_weekend_nothing."'
                           WHEN id=2 THEN '".task_holiday."'
                           WHEN id=3 THEN '".task_off_sick."'
                           WHEN id=4 THEN '".task_leave."'
-                          ELSE name
+                          ELSE SUBSTR(name, 1, 32)
                         END) AS name, active FROM tasks WHERE $cond");
   $stmt->execute();
   $tasks = [];
@@ -89,7 +159,8 @@ function getTaskName($task_id,$class) {
                           ELSE
                           CASE
                             WHEN code IS NULL OR code='' THEN name
-                            ELSE CONCAT('<span class=\"code-$class\">', code, \"</span> \", name)
+                            ELSE CONCAT('<span class=\"code-$class\">', code,
+                            '</span> ', name)
                           END
                         END) FROM tasks WHERE id=?");
   $stmt->execute(array($task_id));
@@ -210,6 +281,75 @@ function countRemainingHours($task_id){
   else {
     return false;
   }
+}
+
+function removeAccountingEntry($entry_id, $entry_type) {
+  $db = new DB();
+  if ($entry_type == 'quotation') {
+    $table = 'quotations';
+  }
+  else if ($entry_type = 'invoice') {
+    $table = 'invoices';
+  }
+  $stmt = $db->prepare("DELETE FROM $table WHERE id=?");
+  $stmt->execute(array($entry_id));
+  return $stmt->rowCount();
+}
+
+function getClientDetails($client_id) {
+  /*
+   * returns an array with the following attributes
+   * name
+   * address
+   * city
+   * postcode
+   * email
+   * phone
+   * vat_code
+   * 
+   * the empty attributes are not returned
+   */
+  $db = new DB();
+  $stmt = $db->prepare('SELECT * FROM clients WHERE id=?');
+  $stmt->execute(array($client_id));
+  $row = $stmt->fetch(PDO::FETCH_ASSOC);
+  $client = [];
+  $client['name'] = $row['name'];
+  $client['address'] = $row['address'];
+  $client['city'] = $row['city'];
+  $client['postcode'] = $row['postcode'];
+  if (strlen($row['email']) != 0) {
+    $client['email'] = $row['email'];
+  }
+  if (strlen($row['phone']) != 0) {
+    $client['phone'] = $row['phone'];
+  }
+  if (strlen($row['vat_code']) != 0) {
+    $client['vat_code'] = $row['vat_code'];
+  }
+  return $client;
+}
+
+function getTasksFromClient($client_id) {
+  //returns an array of formatted task codes
+  $db = new DB();
+  $stmt = $db->prepare("SELECT
+    (CASE
+      WHEN code=''
+      THEN '<span class=\"code-p\">----</span>'
+      ELSE CONCAT('<span class=\"code-p\">', code, '</span>')
+    END) AS code
+    FROM tasks
+    LEFT JOIN clients
+    ON clients.id = tasks.client_id
+    WHERE client_id=?
+    ORDER BY code DESC");
+  $stmt->execute(array($client_id));
+  $codes = [];
+  while ($row = $stmt->fetch()) {
+    $codes[] = $row['code'];
+  }
+  return $codes;
 }
 
 function gcd($n,$m) {

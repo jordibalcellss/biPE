@@ -32,25 +32,21 @@ if ($_POST) {
     }
     else {
       $username = trim($_POST['username']);
-      $bind = @ldap_bind($con,"uid=$username,ou=users,".LDAP_TREE,$_POST['password']); //@ supresses warnings
+      $bind = @ldap_bind($con, "uid=$username,ou=users,".LDAP_TREE,
+        $_POST['password']); //@ supresses warnings
       if ($bind) {
-        $result = @ldap_read($con,LDAP_AUTH_GROUP,"(memberuid=*)",array('memberuid')); //equivalent to ldap_search()
-        $entries = @ldap_get_entries($con,$result);
-        ldap_close($con);
-        $success = false;
-        for ($i = 0; $i < $entries[0]['memberuid']['count']; $i++) {
-          if ($entries[0]['memberuid'][$i] == $username) {
-            $_SESSION['id'] = $username;
-            $success = true;
-            writeLog('login-access.log',logged_in);
-            $domain = explode('/', URL)[2];
-            $path = explode('/', URL)[3];
-            setcookie("sessionPersists", $username, time()+3600*24*30, $path, $domain, 1);
-            ob_end_clean(); //cleans the output buffer and stops buffering
-            header("Location: index.php");
-          }
+        if ($role = getRole($username)) {
+          $_SESSION['id'] = $username;
+          $_SESSION['role'] = $role;
+          writeLog('login-access.log',logged_in);
+          $domain = explode('/', URL)[2];
+          $path = explode('/', URL)[3];
+          setcookie("sessionPersists", $username, time()+3600*24*30, $path,
+            $domain, 1);
+          ob_end_clean(); //cleans the output buffer and stops buffering
+          header("Location: index.php");
         }
-        if (!$success) {
+        else {
           $err[] = unauthorized;
           writeLog('login-error.log',unauthorized_log);
         }
@@ -67,12 +63,14 @@ else {
 }
 ?>
       <h1><?=TITLE?></h1>
-      <form id="login" enctype="application/x-www-form-urlencoded" method="post" action="<?=$_SERVER['PHP_SELF']?>">
+      <form id="login" enctype="application/x-www-form-urlencoded"
+        method="post" action="<?=$_SERVER['PHP_SELF']?>">
         <div><label for="username"><?=username?></label></div>
         <div><input name="username" type="text" class="short" value="" /></div>
 
         <div><label for="password"><?=password?></label></div>
-        <div><input name="password" type="password" class="short" value="" /></div>
+        <div><input name="password" type="password" class="short" value="" />
+          </div>
 
         <input name="envia" type="submit" value="<?=login_submit?>" />
 <?php
