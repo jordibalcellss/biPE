@@ -13,7 +13,8 @@ if ($_POST['submit'] == log_task) {
     $task = $_POST['task'];
   }
   
-  //if task is weekend/nothing or leave declare as no time spent regardless of selection
+  //if task is weekend/nothing or leave declare as no time spent
+  //regardless of selection
   if ($_POST['task'] == 1 || $_POST['task'] == 4) {
     $duration = 0;
   }
@@ -22,12 +23,18 @@ if ($_POST['submit'] == log_task) {
   }
   
   //detect a 0 entry
-  $stmt = $db->prepare('SELECT COUNT(*) FROM time_log WHERE user_id=? AND saved=0 AND duration=0');
+  $stmt = $db->prepare('
+    SELECT COUNT(*) FROM time_log WHERE user_id = ?
+    AND NOT saved AND duration = 0
+  ');
   $stmt->execute(array($_SESSION['id']));
   $count_0 = $stmt->fetchColumn();
 
   //count value entries
-  $stmt = $db->prepare('SELECT COUNT(*) FROM time_log WHERE user_id=? AND saved=0 AND duration>0');
+  $stmt = $db->prepare('
+    SELECT COUNT(*) FROM time_log WHERE user_id = ?
+    AND NOT saved AND duration > 0
+  ');
   $stmt->execute(array($_SESSION['id']));
   $count_non_0 = $stmt->fetchColumn();
   
@@ -36,24 +43,35 @@ if ($_POST['submit'] == log_task) {
     //we are adding a value entry or there are no value entries
     if ($duration > 0 || $count_non_0 == 0) {
       //and the task not repeated
-      $stmt = $db->prepare('SELECT COUNT(*) FROM time_log WHERE user_id=? AND saved=0 AND task_id=?');
+      $stmt = $db->prepare('
+        SELECT COUNT(*) FROM time_log WHERE user_id = ?
+        AND NOT saved AND task_id = ?'
+      );
       $stmt->execute(array($_SESSION['id'],$task));
       $repeated = $stmt->fetchColumn();
       if (!$repeated) {
-        $stmt = $db->prepare('INSERT INTO time_log (user_id, task_id, day, duration) VALUES (?, ?, ?, ?)');
-        $stmt->execute(array($_SESSION['id'], $task, $_POST['target'], $duration));
+        $stmt = $db->prepare('
+          INSERT INTO time_log (user_id, task_id, day, duration)
+          VALUES (?, ?, ?, ?)
+        ');
+        $stmt->execute(array($_SESSION['id'], $task, $_POST['target'],
+          $duration));
       }
     }
   }
 }
 else if ($_POST['submit'] == log_discard) {
   //delete entries
-  $stmt = $db->prepare('DELETE FROM time_log WHERE user_id=? AND saved=0 ORDER BY id DESC LIMIT 1');
+  $stmt = $db->prepare('
+    DELETE FROM time_log WHERE user_id = ?
+    AND NOT saved ORDER BY id DESC LIMIT 1
+  ');
   $stmt->execute(array($_SESSION['id']));
 }
 else if ($_POST['submit'] == log_save_next_day) {
   //save entries
-  $stmt = $db->prepare('UPDATE time_log SET saved=1 WHERE user_id=? AND saved=0');
+  $stmt = $db->prepare('
+    UPDATE time_log SET saved = 1 WHERE user_id = ? AND NOT saved');
   $stmt->execute(array($_SESSION['id']));  
 }
 

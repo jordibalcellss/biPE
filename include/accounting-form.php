@@ -160,11 +160,11 @@ else {
 <?php
 if ($_GET['type'] == 'invoice') {
   echo "\n".'        <div><input name="sent" type="checkbox"
-    value="'.$document[4].'"'.$sent_checked.' /><label for="sent">'.sent.
-    "</label></div>\n";
+          value=""'.$sent_checked.' /><label for="sent">'.sent.
+            "</label></div>\n";
   echo "\n".'        <div><input name="settled" type="checkbox"
-    value="'.$document[5].'"'.$settled_checked.' /><label for="settled">'.
-      settled."</label></div>\n";
+          value=""'.$settled_checked.' /><label for="settled">'.
+            settled."</label></div>\n";
 }
 ?>
 

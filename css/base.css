@@ -22,7 +22,7 @@ input[type="text"], input[type="password"], select {
   border-radius: 2px;
 }
 
-input[type="submit"] {
+input[type="submit"], input[type="button"] {
   padding: 3px 11px;
   margin-top: 16px;
   margin-right: 10px;
@@ -35,6 +35,13 @@ input[type="checkbox"] {
   margin-right: 6px;
   margin-bottom: 10px;
 }
+
+form#expenses-filter { margin-bottom: 20px; }
+form#expenses-filter div { display: inline; }
+form#expenses-filter label { margin-right: 7px; }
+form#expenses-filter input, select { margin-right: 14px; }
+form#expenses-filter input[type="checkbox"] { margin-right: 7px; }
+form#expenses-filter input[type="submit"] { margin-left: 14px; }
 
 div.not-editable-form-item { margin-bottom: 11px; }
 
@@ -76,6 +83,12 @@ div.box-number span { font-size: 48px; }
 
 div.box-client { margin-top: 30px; padding-top: 5px; }
 
+table div.lamp {
+  float: right;
+  width: 15px; height: 15px;
+  border-radius: 2px;
+}
+
 div#trunk {
   width: 1190px;
   min-height: 100%;
@@ -97,6 +110,10 @@ div.two-quarters {
 }
 div.three-quarters {
   width: 880px; margin-left: 10px; margin-right: 10px;
+  display: inline; float: left; position: relative;
+}
+div.four-quarters {
+  width: 1180px;
   display: inline; float: left; position: relative;
 }
 

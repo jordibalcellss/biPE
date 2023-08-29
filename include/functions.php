@@ -3,7 +3,8 @@
 class DB extends PDO {
   public function __construct() {
     $dsn = "mysql:host=".DB_HOST.';port='.DB_PORT.';dbname='.DB_NAME;
-    parent::__construct($dsn, DB_USER, DB_PASS, array(PDO::MYSQL_ATTR_FOUND_ROWS => true));
+    parent::__construct($dsn, DB_USER, DB_PASS,
+      array(PDO::MYSQL_ATTR_FOUND_ROWS => true));
   }
 }
 
@@ -33,7 +34,8 @@ function writeLog($filename, $message) {
     }
     $file = fopen($dir.$filename,'a');
     $date = new DateTime(null, new DateTimeZone('UTC'));
-    $data = $date->format('D M d H:i:s e Y').' '.$_SERVER['REMOTE_ADDR'].' '.$_POST['username'].": $message\n";
+    $data = $date->format('D M d H:i:s e Y').' '.$_SERVER['REMOTE_ADDR'].
+      ' '.$_POST['username'].": $message\n";
     fwrite($file,$data);
     fclose($file);
   }
@@ -85,8 +87,8 @@ function getRole($user_id) {
 
 function printMenu() {
   //menu items depend on the role
-  $modules_admin = 'log timesheet expenses tasks';
-  $modules_accountant = 'expenses invoicing';
+  $modules_admin = 'log timesheet expenses tasks overview';
+  $modules_accountant = 'expenses invoicing overview';
   $modules_employee = 'log timesheet expenses';
 
   $menu = '<span>'.greeting.', '.$_SESSION['id'].'! - ';
@@ -116,6 +118,7 @@ function getTasks($filter) {
    * active (editable filter only)
    */
   $db = new DB();
+  $cond = '';
   if ($filter == 'active') {
     $cond = 'active';
   }
@@ -124,14 +127,16 @@ function getTasks($filter) {
   }
   $cond = $cond.' ORDER BY code DESC, name ASC, id DESC';
 
-  $stmt = $db->prepare("SELECT id, code,
-                        (CASE
-                          WHEN id=1 THEN '".task_weekend_nothing."'
-                          WHEN id=2 THEN '".task_holiday."'
-                          WHEN id=3 THEN '".task_off_sick."'
-                          WHEN id=4 THEN '".task_leave."'
-                          ELSE SUBSTR(name, 1, 32)
-                        END) AS name, active FROM tasks WHERE $cond");
+  $stmt = $db->prepare("
+    SELECT id, code,
+    (CASE
+      WHEN id=1 THEN '".task_weekend_nothing."'
+      WHEN id=2 THEN '".task_holiday."'
+      WHEN id=3 THEN '".task_off_sick."'
+      WHEN id=4 THEN '".task_leave."'
+      ELSE SUBSTR(name, 1, 32)
+    END) AS name, active FROM tasks WHERE $cond
+  ");
   $stmt->execute();
   $tasks = [];
   $i = 0;
@@ -147,22 +152,32 @@ function getTasks($filter) {
   return $tasks;
 }
 
-function getTaskName($task_id,$class) {
+function getTaskName($task_id, $class = false) {
   //returns string prepended with code (if any)
+  if (!$class) {
+    $opening = '';
+    $closure = '';
+  }
+  else {
+    $opening = "<span class=\"code-$class\">";
+    $closure = "</span>";
+  }
+
   $db = new DB();
-  $stmt = $db->prepare("SELECT
-                        (CASE
-                          WHEN id=1 THEN '".task_weekend_nothing."'
-                          WHEN id=2 THEN '".task_holiday."'
-                          WHEN id=3 THEN '".task_off_sick."'
-                          WHEN id=4 THEN '".task_leave."'
-                          ELSE
-                          CASE
-                            WHEN code IS NULL OR code='' THEN name
-                            ELSE CONCAT('<span class=\"code-$class\">', code,
-                            '</span> ', name)
-                          END
-                        END) FROM tasks WHERE id=?");
+  $stmt = $db->prepare("
+    SELECT
+    (CASE
+      WHEN id=1 THEN '".task_weekend_nothing."'
+      WHEN id=2 THEN '".task_holiday."'
+      WHEN id=3 THEN '".task_off_sick."'
+      WHEN id=4 THEN '".task_leave."'
+      ELSE
+      CASE
+        WHEN code IS NULL OR code='' THEN name
+        ELSE CONCAT('$opening', code, '$closure ', name)
+      END
+    END) FROM tasks WHERE id=?
+  ");
   $stmt->execute(array($task_id));
   return $stmt->fetchColumn();
 }
@@ -179,7 +194,8 @@ function getDurations() {
 function getLastRecord($user_id) {
   //returns DateTime object, latest entry date or false if empty
   $db = new DB();
-  $stmt = $db->prepare('SELECT MAX(day) AS day FROM time_log WHERE user_id=? AND saved=1');
+  $stmt = $db->prepare('
+    SELECT MAX(day) AS day FROM time_log WHERE user_id=? AND saved');
   $stmt->execute(array($user_id));
   $day = $stmt->fetchColumn();
   if ($day == NULL) {
@@ -193,7 +209,8 @@ function getLastRecord($user_id) {
 function removeRecord($record_id,$user_id) {
   $db = new DB();
   $last = getLastRecord($user_id);
-  $stmt = $db->prepare('DELETE FROM time_log WHERE id=? AND user_id=? AND day=?');
+  $stmt = $db->prepare('
+    DELETE FROM time_log WHERE id=? AND user_id=? AND day=?');
   $stmt->execute(array($record_id,$user_id,$last->format('Y-m-d')));
   return $stmt->rowCount();
 }
@@ -201,39 +218,76 @@ function removeRecord($record_id,$user_id) {
 function getTargetDate($user_id) {
   //returns a DateTime object
   if (!getLastRecord($user_id)) {
-    //first record, log yesterday time
-    return new DateTime('yesterday', new DateTimeZone(TIMEZONE));
+    //first record
+    $today = new DateTime(null, new DateTimeZone(TIMEZONE));
+    if (SKIP_WEEKENDS_HOLIDAYS) {
+      //return last full working day
+      while (true) {
+        $cand = $today->modify('-1 day');
+        if ($cand->format('D') != 'Sat' && $cand->format('D') != 'Sun'
+          && !isHoliday($cand)) {
+          return $cand;
+        }
+      }
+    }
+    return $today->modify('-1 day');
   }
   else {
-    //log the next day time
     $today = getLastRecord($user_id);
+    if (SKIP_WEEKENDS_HOLIDAYS) {
+      //return next working day
+      while (true) {
+        $cand = $today->modify('+1 day');
+        if ($cand->format('D') != 'Sat' && $cand->format('D') != 'Sun'
+          && !isHoliday($cand)) {
+          return $cand;
+        }
+      }
+    }
     return $today->modify('+1 day');
   }
+}
+
+function isHoliday($day) {
+  //expects a DateTime object
+  $db = new DB();
+  $stmt = $db->query("SELECT CONCAT(month, '-', day) AS day FROM holidays");
+  while ($row = $stmt->fetch()) {
+    if ($day->format('n-j') == $row['day']) {
+      return true;
+    }
+  }
+  return false;
 }
 
 function getUnsavedRecords($user_id) {
   //returns an array of strings
   $db = new DB();
-  $stmt = $db->prepare("SELECT tasks.id, tasks.code,
-                        (CASE
-                          WHEN tasks.id=1 THEN '".task_weekend_nothing."'
-                          WHEN tasks.id=2 THEN '".task_holiday."'
-                          WHEN tasks.id=3 THEN '".task_off_sick."'
-                          WHEN tasks.id=4 THEN '".task_leave."'
-                          ELSE tasks.name
-                        END) AS name, time_log.duration
-                        FROM time_log LEFT JOIN tasks ON tasks.id = time_log.task_id
-                        WHERE user_id=? AND saved=0");
+  $stmt = $db->prepare("
+    SELECT tasks.id, tasks.code,
+    (CASE
+      WHEN tasks.id=1 THEN '".task_weekend_nothing."'
+      WHEN tasks.id=2 THEN '".task_holiday."'
+      WHEN tasks.id=3 THEN '".task_off_sick."'
+      WHEN tasks.id=4 THEN '".task_leave."'
+      ELSE tasks.name
+    END) AS name, time_log.duration
+    FROM time_log LEFT JOIN tasks
+    ON tasks.id = time_log.task_id
+    WHERE user_id=? AND NOT saved
+  ");
   $stmt->execute(array($user_id));
   $records = $stmt->fetchAll(PDO::FETCH_ASSOC);
   $out = [];
+  $accumulated = 0;
   foreach ($records as $record) {
     if ($record['id'] <= 4) {
       $time_preview = '';
     }
     else {
       if (countRemainingHours($record['id'])) {
-        $time_preview = ' ('.countRemainingHours($record['id']).' '.hours.' '.remaining.')';
+        $time_preview = ' ('.countRemainingHours($record['id']).
+          ' '.hours.' '.remaining.')';
       }
       else {
         $time_preview = '';
@@ -245,25 +299,38 @@ function getUnsavedRecords($user_id) {
     else {
       $code = '<span class="code-p">'.$record['code'].'</span> ';
     }
-    $out[] = $code.$record['name'].": ".floor($record['duration']).' '.hours.decimalPartToFrac($record['duration']).$time_preview;
+    $out[] = $code.$record['name'].": ".floor($record['duration']).
+      ' '.hours.decimalPartToFrac($record['duration']).$time_preview;
+    $accumulated += $record['duration'];
+  }
+  if ($accumulated) {
+    $out[] = '<b>'.total.'</b>: '.floor($accumulated).
+      ' '.hours.decimalPartToFrac($accumulated);
   }
   return $out;
 }
 
 function countRemainingHours($task_id){
-  //returns an integer or false if rate is not set or there are no fees
+  /*
+   * returns an integer or false if
+   * rate is not set or
+   * there are no fees or 
+   * user role is employee
+   */
   $db = new DB();
   //rate p/hour
   $stmt = $db->prepare('SELECT rate FROM tasks WHERE id=?');
   $stmt->execute(array($task_id));
   $rate = $stmt->fetchColumn();
-  if ($rate) {
+  if ($rate && $_SESSION['role'] != 'employee') {
     //over estimated revenue
-    $stmt = $db->prepare("SELECT SUM(amount) FROM quotations WHERE task_id=? AND nature='i'");
+    $stmt = $db->prepare("
+      SELECT SUM(amount) FROM quotations WHERE task_id=? AND nature='i'");
     $stmt->execute(array($task_id));
     $estimated_income = $stmt->fetchColumn();
 
-    $stmt = $db->prepare("SELECT SUM(amount) FROM quotations WHERE task_id=? AND nature='e'");
+    $stmt = $db->prepare("
+      SELECT SUM(amount) FROM quotations WHERE task_id=? AND nature='e'");
     $stmt->execute(array($task_id));
     $estimated_expense = $stmt->fetchColumn();
     
@@ -271,7 +338,8 @@ function countRemainingHours($task_id){
 
     if ($estimated_revenue) {
       //accumulated worked
-      $stmt = $db->prepare('SELECT SUM(duration) AS spent FROM time_log WHERE task_id=?');
+      $stmt = $db->prepare('
+        SELECT SUM(duration) AS spent FROM time_log WHERE task_id=?');
       $stmt->execute(array($task_id));
       $spent = $stmt->fetchColumn();
 
@@ -343,13 +411,105 @@ function getTasksFromClient($client_id) {
     LEFT JOIN clients
     ON clients.id = tasks.client_id
     WHERE client_id=?
-    ORDER BY code DESC");
+    ORDER BY code DESC
+  ");
   $stmt->execute(array($client_id));
   $codes = [];
   while ($row = $stmt->fetch()) {
     $codes[] = $row['code'];
   }
   return $codes;
+}
+
+function getTimesheetOverview($user_id, $interval = 'week') {
+  /*
+   * prepares formatted non-readonly tasks overview
+   * returns an array of arrays
+   * [tasks => [[task, spent, percent], [...]], total_spent ]
+   */
+  $interval = strtoupper($interval);
+  $db = new DB();
+  $stmt = $db->prepare("
+    SELECT
+    (CASE
+      WHEN tasks.code IS NULL OR tasks.code = '' THEN tasks.name
+      ELSE CONCAT(tasks.code, \" \", tasks.name)
+    END) as task, SUM(duration) as spent
+    FROM time_log
+    LEFT JOIN tasks
+    ON tasks.id = time_log.task_id
+    WHERE time_log.day >= DATE_SUB(NOW(), INTERVAL 1 $interval)
+    AND NOT tasks.readonly AND time_log.saved
+    AND time_log.user_id = ?
+    GROUP BY time_log.task_id
+    ORDER BY spent DESC
+  ");
+  $stmt->execute(array($user_id));
+  $total_spent = 0;
+  $overview = array(array());
+  //iterate result set for total spent
+  while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+    //TODO next line formatting needs to be done outside once plain text tables
+    // are removed
+    $spent = floor($row['spent']).' '.hours.decimalPartToFrac($row['spent']);
+    $overview['tasks'][] = array(
+      'task' => $row['task'], 'spent' => $row['spent']);
+    $total_spent = $total_spent + $row['spent'];
+  }
+  //push percents
+  if (isset($overview['tasks'])) {
+    for ($i = 0; $i < count($overview['tasks']); $i++) {
+      $percent = formatNumberP(
+        $overview['tasks'][$i]['spent'] / $total_spent * 100, false, true, 1);
+      $overview['tasks'][$i]['percent'] = $percent.' %';
+    }
+    $overview['total_spent'] = $total_spent;
+  }
+  return $overview;
+}
+
+function getRatios($full, $partial) {
+  /*
+   * expects two 2-column array with
+   * column 0 = numeric index
+   * column 1 = value
+   * returns an array with the same number of rows than full and containing
+   * partial's values divided by full's matching indexes sorted by column 1
+   */
+  $ratios = array();
+  $i = 0;
+  while ($i < count($full)) {
+    $j = 0;
+    while ($j < count($partial)) {
+      if ($partial[$j][0] == $full[$i][0]) {
+        //there is a matching index
+        $ratios[$i][0] = $partial[$j][0];
+        $ratios[$i][1] = $partial[$j][1] / $full[$i][1];
+        break;
+      }
+      if ($j == count($partial) - 1) {
+        //reached the end of partial, then ratio = 0
+        $ratios[$i][0] = $full[$i][0];
+        $ratios[$i][1] = 0;
+      }
+      $j++;
+    }
+    $i++;
+  }
+  usort($ratios, 'sortByValue');
+  return $ratios;
+}
+
+function sortByValue($a, $b) {
+  if ($a[1] > $b[1]) {
+    return 1;
+  }
+  else if ($a[1] < $b[1]) {
+    return -1;
+  }
+  else {
+    return 0;
+  }
 }
 
 function gcd($n,$m) {
@@ -377,13 +537,19 @@ function decimalPartToFrac($n) {
 }
 
 function checkInputDate($date) {
-  //gets direct user input string (dd*mm*yyyy, with or w/o leading zeros), returns yyyy-mm-dd on success
-  $dmy = preg_split('/[-\/.\s]/',trim($date)); //admits dashes, slashes, dots and spaces as separators
+  /*
+   * gets direct user input string (dd*mm*yyyy, with or w/o leading zeros)
+   * returns yyyy-mm-dd on success
+   */
+
+  //admits dashes, slashes, dots and spaces as separators
+  $dmy = preg_split('/[-\/.\s]/',trim($date));
   if (count($dmy) != 3) {
     return false;
   }
   else {
-    if (!ctype_digit($dmy[0]) || !ctype_digit($dmy[1]) || !ctype_digit($dmy[2])) {
+    if (!ctype_digit($dmy[0]) || !ctype_digit($dmy[1]) ||
+      !ctype_digit($dmy[2])) {
       return false;
     }
     else {
@@ -408,18 +574,19 @@ function formatDateP($date) {
   }
 }
 
-function formatNumberP($number, $hide_zero=false, $hide_zero_decimal=false) {
+function formatNumberP($number, $hide_zero = false, $hide_zero_decimal = false,
+  $decimals = 2) {
   //returns formatted string for printing
   if ($hide_zero && $number == 0) {
     return '';
   }
   else {
     if ($hide_zero_decimal) {
-      return str_replace('.', ',', floatval(round($number, 2)));
+      return str_replace('.', ',', floatval(round($number, $decimals)));
     }
     else {
       if (LOCALE == 'ca') {
-        return number_format($number, 2, ',', '.');
+        return number_format($number, $decimals, ',', '.');
       }
     }
   }
@@ -430,6 +597,40 @@ function formatNumberR($number) {
   if (LOCALE == 'ca') {
     return str_replace(',', '.',str_replace('.', '', $number));
   }
+}
+
+function mb_str_pad($str, $pad_len, $pad_str = ' ', $dir = STR_PAD_RIGHT) {
+  //https://stackoverflow.com/questions/14773072/php-str-pad-unicode-issue
+  $str_len = mb_strlen($str);
+  $pad_str_len = mb_strlen($pad_str);
+  if (!$str_len && ($dir == STR_PAD_RIGHT || $dir == STR_PAD_LEFT)) {
+    $str_len = 1; // @debug
+  }
+  if (!$pad_len || !$pad_str_len || $pad_len <= $str_len) {
+    return $str;
+  }
+
+  $result = null;
+  if ($dir == STR_PAD_BOTH) {
+    $length = ($pad_len - $str_len) / 2;
+    $repeat = ceil($length / $pad_str_len);
+    $result = mb_substr(str_repeat($pad_str, $repeat), 0, floor($length))
+      . $str
+      . mb_substr(str_repeat($pad_str, $repeat), 0, ceil($length));
+  }
+  else {
+    $repeat = ceil($str_len - $pad_str_len + $pad_len);
+    if ($dir == STR_PAD_RIGHT) {
+      $result = $str . str_repeat($pad_str, $repeat);
+      $result = mb_substr($result, 0, $pad_len);
+    }
+    else if ($dir == STR_PAD_LEFT) {
+      $result = str_repeat($pad_str, $repeat);
+      $result = mb_substr($result, 0,
+        $pad_len - (($str_len - $pad_str_len) + $pad_str_len)) . $str;
+    }
+  }
+  return $result;
 }
 
 ?>

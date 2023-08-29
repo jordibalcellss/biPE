@@ -37,6 +37,7 @@ if (!isset($_SESSION['id'])) {
     $_SESSION['role'] = getRole($_SESSION['id']);
   }
 }
+ob_start(); //buffers output until end of page or ob_ functions
 
 require 'include/template/head.php';
 
@@ -52,7 +53,7 @@ if (isset($_GET['module'])) {
       require('include/log-form.php');
     }
   }
-  else if ($_GET['module'] == 'timesheet' && $_SESSION['role'] != 'accountant')
+  else if ($_GET['module'] == 'timesheet')
   {
     require('include/timesheet.php');
   }
@@ -109,7 +110,7 @@ if (isset($_GET['module'])) {
     require('include/invoicing.php');
   }
   else if ($_GET['module'] == 'overview') {
-    #broader picture across tasks
+    require('include/overview.php');
   }
   else if ($_GET['module'] == 'test') {
     require('include/test.php');

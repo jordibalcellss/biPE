@@ -23,6 +23,7 @@ define("accounting","comptable");
 define("phases","previsió");
 define("expenses","despeses");
 define("invoicing","facturació");
+define("overview","visió general");
 
 define("log_task","registra");
 define("log_discard","descarta");
@@ -31,7 +32,7 @@ define("log_what_tasks_today","en què has treballat aquesta jornada?");
 define("log_for_how_long","quant de temps hi has dedicat?");
 define("log_not_needed","tot bé, no cal que registris<br/>més temps encara");
 
-define("task_weekend_nothing","cap de setmana/res");
+define("task_weekend_nothing","res");
 define("task_holiday","vacances");
 define("task_off_sick","malaltia/metge");
 define("task_leave","baixa");
@@ -50,7 +51,9 @@ define("remove","esborra");
 define("previous_page","pàgina anterior");
 define("next_page","pàgina següent");
 define("export_timesheet_csv","descarrega el meu temps per a full de càlcul");
+define("export_csv","exporta csv");
 define("no_records_yet","encara no hi ha cap registre");
+define("empty_search","la cerca no ha tornat cap registre");
 define("code","codi");
 define("name","nom");
 define("edit","edita");
@@ -60,6 +63,7 @@ define("manage","gestiona");
 define("details","detalls");
 define("personal_expenses","despeses personals");
 define("declare_personal_expenses","declara ".personal_expenses);
+define("total","total");
 
 define("address","adreça");
 define("city","població");
@@ -69,6 +73,8 @@ define("email","correu-e");
 define("phone","telèfon");
 
 define("save","desa");
+define("filter","filtra");
+define("clear","reseteja");
 define("name_cannot_be_empty","el nom no pot ser pas buit");
 define("amount_cannot_be_empty","l'import no pot ser pas buit");
 define("value_cannot_be_empty","el valor no pot ser pas buit");
@@ -81,12 +87,16 @@ define("back","torna");
 define("is_free_software","és programari lliure");
 
 define("rate","tarifa");
-define("rate_math","€/h");
+define("currency","€");
+define("rate_math",currency."/h");
 define("date","data");
+define("from","de");
+define("to","a");
 define("deadline","data límit");
 define("active","actiu");
 define("category","categoria");
-define("invalid_deadline","la ".deadline." és invàlida, useu format dd-mm-aaaa");
+define("invalid_deadline","la ".deadline." és invàlida, useu format
+dd-mm-aaaa");
 define("invalid_date","la ".date." és invàlida, useu format dd-mm-aaaa");
 
 define("description","descripció");
@@ -119,8 +129,8 @@ define("receipt_value","valor d'un rebut");
 define("paid_back","retornat");
 
 define("bulk_log_advice","tingueu en compte que el temps afegit amb aquest
-formulari s'anota amb la data d'avui (o bé la data del darrer registre, si n'hi
-ha)<br/><br/>es pot introduir fins a 1000 hores cada vegada");
+formulari s'anota amb la data del darrer registre<br/><br/>es pot introduir
+fins a 1000 hores cada vegada");
 
 define("bulk_log_excess","admet fins a 999 hores cada volta");
 define("are_now_orphans","són ara orfes");

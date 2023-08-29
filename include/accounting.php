@@ -66,16 +66,16 @@ if (count($records) > 0) {
   echo "        </tr>\n";
   foreach ($records as $record) {
     if (!$record['sent']) {
-      $sent = no;
+      $sent = '<div class="lamp off"></div>';
     }
     else {
-      $sent = yes;
+      $sent = '<div class="lamp lit"></div>';
     }
     if (!$record['settled']) {
-      $settled = no;
+      $settled = '<div class="lamp off"></div>';
     }
     else {
-      $settled = yes;
+      $settled = '<div class="lamp lit"></div>';
     }
     if ($record['nature'] == 'i') {
       $nature = income;

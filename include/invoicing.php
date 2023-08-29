@@ -23,21 +23,23 @@ if ($_SESSION['role'] == 'accountant') {
       }
     }
   }
-  $stmt = $db->prepare("SELECT DATE_FORMAT(day,'%d-%m-%Y') AS day,
-                        (CASE
-                          WHEN tasks.code IS NULL OR tasks.code=''
-                          THEN SUBSTR(tasks.name, 1, 36)
-                          ELSE CONCAT('<span class=\"code-p\">', tasks.code,
-                          '</span> ', SUBSTR(tasks.name, 1, 29))
-                        END) AS task, invoices.id, amount,
-                        SUBSTR(description, 1, 50) as description,
-                        sent, settled, clients.name AS client
-                        FROM invoices
-                        LEFT JOIN tasks
-                        ON tasks.id = invoices.task_id
-                        LEFT JOIN clients
-                        ON clients.id = tasks.client_id
-                        WHERE nature='i' ORDER BY invoices.day DESC");
+  $stmt = $db->prepare("
+    SELECT DATE_FORMAT(day,'%d-%m-%Y') AS day,
+    (CASE
+      WHEN tasks.code IS NULL OR tasks.code=''
+      THEN SUBSTR(tasks.name, 1, 36)
+      ELSE CONCAT('<span class=\"code-p\">', tasks.code, '</span> ',
+        SUBSTR(tasks.name, 1, 29))
+    END) AS task, invoices.id, amount,
+    SUBSTR(description, 1, 45) AS description, sent, settled,
+    SUBSTR(clients.name, 1, 38) AS client
+    FROM invoices
+    LEFT JOIN tasks
+    ON tasks.id = invoices.task_id
+    LEFT JOIN clients
+    ON clients.id = tasks.client_id
+    WHERE nature = 'i' ORDER BY invoices.day DESC"
+  );
   $stmt->execute();
   $records = $stmt->fetchAll(PDO::FETCH_ASSOC);
   if (count($records) > 0) {
@@ -59,23 +61,23 @@ if ($_SESSION['role'] == 'accountant') {
     foreach ($records as $record) {
       if (!$record['sent']) {
         $sent = '<a href="?module=invoicing&action=sent&id='.
-          $record['id'].'">'.no.'</a>';
+          $record['id'].'"><div class="lamp off"></div></a>';
       }
       else {
         $sent = '<a href="?module=invoicing&action=unsent&id='.
-          $record['id'].'">'.yes.'</a>';
+          $record['id'].'"><div class="lamp lit"></div></a>';
       }
       if (!$record['settled']) {
         $settled = '<a href="?module=invoicing&action=settled&id='.
-          $record['id'].'">'.no.'</a>';
+          $record['id'].'"><div class="lamp off"></div></a>';
       }
       else {
         $settled = '<a href="?module=invoicing&action=unsettled&id='.
-          $record['id'].'">'.yes.'</a>';
+          $record['id'].'"><div class="lamp lit"></div></a>';
       }
       echo "          <tr>\n";
       echo '            <td width="100">'.$record['day']."</td>\n";
-      echo '            <td width="250">'.$record['task']."</td>\n";
+      echo '            <td width="280">'.$record['task']."</td>\n";
       echo '            <td width="325">'.$record['description']."</td>\n";
       echo '            <td width="270">'.$record['client']."</td>\n";
       echo '            <td align="right" width="60">'.

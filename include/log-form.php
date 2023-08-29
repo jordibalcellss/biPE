@@ -4,7 +4,8 @@ $target_date = getTargetDate($_SESSION['id']);
 $today = new DateTime(null, new DateTimeZone(TIMEZONE));
 
 //we will display the form once the day is over
-if ($target_date->format('Y-m-d') == $today->format('Y-m-d')) {
+//or wait if target_date sits in the future because of SKIP_WEEKENDS
+if ($target_date->format('Y-m-d') >= $today->format('Y-m-d')) {
   echo '      <h3>'.log_not_needed."</h3>\n";
 }
 else {
@@ -14,9 +15,9 @@ else {
   echo '      <h2>'.strtolower($target_date_fmt->format($target_date)).
     "</h2>\n";
   echo '      <form id="log" enctype="application/x-www-form-urlencoded"
-    method="post" action="index.php?module=log">'."\n";
-  echo '        <div><label for="task">'.log_what_tasks_today."</label>
-    </div>\n";
+      method="post" action="index.php?module=log">'."\n";
+  echo '        <div><label for="task">'.log_what_tasks_today.
+    "</label></div>\n";
   echo "        <div><select name=\"task\">\n";
   
   $tasks = getTasks('active');
@@ -30,8 +31,8 @@ else {
     echo '          <option value="'.$task['id']."\">$entry</option>\n";
   }
   echo "        </select></div>\n";
-  echo '        <div><label for="duration">'.log_for_how_long."</label>
-    </div>\n";
+  echo '        <div><label for="duration">'.log_for_how_long.
+    "</label></div>\n";
   echo "        <div><select name=\"duration\">\n";
   echo "          <option value=\"0\"></option>\n";
 
@@ -41,8 +42,8 @@ else {
       hours.decimalPartToFrac($duration)."</option>\n";
   }
   echo "        </select></div>\n";
-  echo '        <input name="target" type="hidden"
-    value="'.$target_date->format('Y-m-d')."\" />\n";
+  echo '        <input name="target" type="hidden" value="'.
+    $target_date->format('Y-m-d')."\" />\n";
   
   $records = getUnsavedRecords($_SESSION['id']);
   echo "        <ul id=\"unsaved-records\">\n";

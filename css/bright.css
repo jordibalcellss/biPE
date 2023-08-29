@@ -8,7 +8,7 @@ input[type="text"], input[type="password"], select {
   color: #222;
 }
 
-input[type="submit"] {
+input[type="submit"], input[type="button"] {
   border: 1px #777 solid;
   background: #ddd;
   color: #444;
@@ -29,4 +29,7 @@ span.code-h3 {
 
 div.box-year, div.box-client { border-top: 1px #777 solid; }
 
-form#expenses { border-right: 1px #777 solid; }
+form.left { border-right: 1px #777 solid; }
+
+table div.lit { background-color: #0d3; }
+table div.off { background-color: #ccc; }

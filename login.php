@@ -15,11 +15,12 @@ if (isset($_GET['action'])) {
     header("Location: login.php");
   }
 }
-ob_start();
-//buffers output until end of page or ob_ functions
+ob_start(); //buffers output until end of page or ob_ functions
 
 require 'include/functions.php';
 require 'include/template/head-login.php';
+
+$err = [];
 
 if ($_POST) {
   $con = ldap_connect(LDAP_HOST);
@@ -57,9 +58,6 @@ if ($_POST) {
       }
     }
   }
-}
-else {
-  $err = [];
 }
 ?>
       <h1><?=TITLE?></h1>

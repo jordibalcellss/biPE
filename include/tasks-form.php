@@ -136,7 +136,7 @@ while ($row = $stmt->fetch(PDO::FETCH_NUM)) {
         <div><label for="rate"><?=rate?> <?=rate_math?></label></div>
         <div><input name="rate" type="text" class="shorter" value="<?=$rate?>" /></div>
 
-        <div><input name="active" type="checkbox" value="<?=$task[6]?>"<?=$checked?> /><label for="active"><?=active?></label></div>
+        <div><input name="active" type="checkbox" value=""<?=$checked?> /><label for="active"><?=active?></label></div>
 
         <input name="submit" type="submit" value="<?=$action?>" />
 <?php
