@@ -8,7 +8,7 @@ if ($_SESSION['role'] == 'accountant') {
       if ($_GET['action'] == 'paid' || $_GET['action'] == 'unpaid') {
         if (isset($_GET['id'])) {
           $stmt = $db->prepare('
-            UPDATE expenses_reclaim SET paid_back=? WHERE id=?');
+            UPDATE expenses_reclaim SET paid_back = ? WHERE id = ?');
           if ($_GET['action'] == 'paid') {
             $stmt->execute(array(1, $_GET['id']));
           }
@@ -22,7 +22,7 @@ if ($_SESSION['role'] == 'accountant') {
         $stmt = $db->prepare("
           SELECT DATE_FORMAT(day,'%d-%m-%Y') AS day,
           (CASE
-            WHEN tasks.code IS NULL OR tasks.code='' THEN tasks.name
+            WHEN tasks.code IS NULL OR tasks.code = '' THEN tasks.name
             ELSE CONCAT(tasks.code, \" \", tasks.name)
           END) AS task, expenses_reclaim.id, amount, description,
           (CASE
@@ -126,7 +126,7 @@ if ($_SESSION['role'] == 'accountant') {
   $stmt = $db->prepare("
     SELECT DATE_FORMAT(day,'%d-%m-%Y') AS day,
     (CASE
-      WHEN tasks.code IS NULL OR tasks.code=''
+      WHEN tasks.code IS NULL OR tasks.code = ''
       THEN SUBSTR(tasks.name, 1, 36)
       ELSE CONCAT('<span class=\"code-p\">', tasks.code,
       '</span> ', SUBSTR(tasks.name, 1, 29))
@@ -231,7 +231,7 @@ if ($_SESSION['role'] == 'accountant') {
 else {
   if (isset($_GET['action'])) {
     if ($_GET['action'] == 'remove' && isset($_GET['id'])) {
-      $stmt = $db->prepare('DELETE FROM expenses_reclaim WHERE id=?');
+      $stmt = $db->prepare('DELETE FROM expenses_reclaim WHERE id = ?');
       $stmt->execute(array($_GET['id']));
     }
   }
@@ -353,7 +353,7 @@ else {
   $stmt = $db->prepare("
     SELECT DATE_FORMAT(day,'%d-%m-%Y') AS day,
     (CASE
-      WHEN tasks.code IS NULL OR tasks.code=''
+      WHEN tasks.code IS NULL OR tasks.code = ''
       THEN SUBSTR(tasks.name, 1, 36)
       ELSE CONCAT('<span class=\"code-p\">', tasks.code,
       '</span> ', SUBSTR(tasks.name, 1, 29))
@@ -361,7 +361,7 @@ else {
     SUBSTR(description, 1, 29) as description, nature, paid_back
     FROM expenses_reclaim LEFT JOIN tasks
     ON tasks.id = expenses_reclaim.task_id
-    WHERE user_id=?
+    WHERE user_id = ?
     ORDER BY expenses_reclaim.id DESC LIMIT $first,".RECORDS_PAGE
   );
   $stmt->execute(array($_SESSION['id']));

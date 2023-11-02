@@ -33,7 +33,7 @@ if ($_POST) {
     }
     else {
       $username = trim($_POST['username']);
-      $bind = @ldap_bind($con, "uid=$username,ou=users,".LDAP_TREE,
+      $bind = @ldap_bind($con, "uid=$username,".LDAP_USER_BASE,
         $_POST['password']); //@ supresses warnings
       if ($bind) {
         if ($role = getRole($username)) {

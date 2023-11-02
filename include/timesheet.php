@@ -1,9 +1,51 @@
 <?php
 
 if ($_SESSION['role'] != 'accountant') {
+
+  $db = new DB();
+
   if (isset($_GET['action'])) {
     if ($_GET['action'] == 'remove' && isset($_GET['id'])) { 
       removeRecord($_GET['id'],$_SESSION['id']);
+    }
+    else if ($_GET['action'] == 'export') {
+      ob_clean();
+      $stmt = $db->prepare("    
+        SELECT DATE_FORMAT(day,'%d-%m-%Y') AS day,
+        (CASE
+          WHEN task_id = 1 THEN '".task_weekend_nothing."'
+          WHEN task_id = 2 THEN '".task_holiday."'
+          WHEN task_id = 3 THEN '".task_off_sick."'
+          WHEN task_id = 4 THEN '".task_leave."'
+          ELSE
+          CASE
+            WHEN tasks.code IS NULL OR tasks.code = '' THEN tasks.name
+            ELSE CONCAT(tasks.code, \" \", tasks.name)
+          END
+        END) AS task, duration
+        FROM time_log LEFT JOIN tasks
+        ON tasks.id = time_log.task_id
+        WHERE user_id = ? AND saved
+        ORDER BY time_log.day DESC, time_log.duration DESC
+      ");
+      $stmt->execute(array($_SESSION['id']));
+      $records = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+      header('Content-type: text/csv');
+      header('Content-Disposition: attachment; filename='.str_replace(
+        ' ', '_', timesheet).'_'.
+        bin2hex(openssl_random_pseudo_bytes(2)).'.csv');
+
+      foreach ($records as $record) {
+        if ($record['duration'] > 0) {
+          $duration = formatNumberP($record['duration']);
+        }
+        else {
+          $duration = '';
+        }
+        echo $record['day'].';'.$record['task'].';'.$duration."\n";
+      }
+      exit;
     }
   }
 
@@ -14,9 +56,8 @@ if ($_SESSION['role'] != 'accountant') {
   else {
     $page = $_GET['page'];
   }
-  $db = new DB();
   $stmt = $db->prepare("SELECT COUNT(*)
-    FROM time_log WHERE user_id=? AND saved=1");
+    FROM time_log WHERE user_id = ? AND saved");
   $stmt->execute(array($_SESSION['id']));
   $num_records = $stmt->fetchColumn();
 
@@ -40,55 +81,84 @@ if ($_SESSION['role'] != 'accountant') {
   $stmt = $db->prepare("
     SELECT DATE_FORMAT(day,'%d-%m-%Y') AS day,
     (CASE
-      WHEN task_id=1 THEN '".task_weekend_nothing."'
-      WHEN task_id=2 THEN '".task_holiday."'
-      WHEN task_id=3 THEN '".task_off_sick."'
-      WHEN task_id=4 THEN '".task_leave."'
+      WHEN task_id = 1 THEN '".task_weekend_nothing."'
+      WHEN task_id = 2 THEN '".task_holiday."'
+      WHEN task_id = 3 THEN '".task_off_sick."'
+      WHEN task_id = 4 THEN '".task_leave."'
       ELSE
       CASE
-        WHEN tasks.code IS NULL OR tasks.code=''
-        THEN SUBSTR(tasks.name, 1, 38)
+        WHEN tasks.code IS NULL OR tasks.code = '' THEN tasks.name
         ELSE CONCAT('<span class=\"code-p\">', tasks.code,
-        '</span> ', SUBSTR(tasks.name, 1, 31))
+        '</span> ', tasks.name)
       END
     END) AS task, duration, time_log.id AS record_id
     FROM time_log LEFT JOIN tasks
     ON tasks.id = time_log.task_id
-    WHERE user_id=? AND saved=1
+    WHERE user_id = ? AND saved
     ORDER BY time_log.day DESC, time_log.duration DESC
-    LIMIT $first,".RECORDS_PAGE);
+    LIMIT $first,".RECORDS_PAGE
+  );
 
+  echo '      <h2>'.timesheet."</h2>\n";
+  
   $stmt->execute(array($_SESSION['id']));
   $records = $stmt->fetchAll(PDO::FETCH_ASSOC);
+  
   if (count($records) > 0) {
-    echo '      <h2>'.timesheet."</h2>\n";
-    echo '      <div id="sec-menu"><a href="export.php">'.export_timesheet_csv.
+    echo '      <div id="sec-menu"><a href="?module=timesheet&action=export">'.export_timesheet_csv.
       '</a> - <a href="?module=bulk-log">'.bulk_log."</a></div>\n";
 
+    //retrieve details for the right column
+    //years with holidays, off sick or leave records
     $stmt = $db->prepare("
-      SELECT YEAR(day) AS year,
-      (CASE
-        WHEN task_id=2 THEN '".task_holiday."'
-        WHEN task_id=3 THEN '".task_off_sick."'
-        WHEN task_id=4 THEN '".task_leave."'
-      END) AS task,
-      (CASE
-        WHEN task_id=4 THEN COUNT(*)
-        ELSE SUM(duration)/".WORKDAY_DURATION."
-      END) AS amount
-      FROM time_log WHERE YEAR(day) IN
-      (SELECT DISTINCT(YEAR(day)) FROM time_log
-      WHERE user_id=? AND task_id=2 OR task_id=3
-      OR task_id=4 AND saved=1) 
-      AND user_id=? AND task_id=2 OR task_id=3
-      OR task_id=4 AND saved=1 GROUP BY YEAR(day), task_id");
-  
-    $stmt->execute(array($_SESSION['id'], $_SESSION['id']));
-    $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
-  
+      SELECT DISTINCT(YEAR(day)) FROM time_log
+      WHERE user_id = ? AND task_id < 5 AND task_id != 1 AND saved
+    ");
+    $stmt->execute(array($_SESSION['id']));
+    $summary = array();
+    //can't use a fetch() loop here because we are already iterating
+    //a PDOStatement inside
+    $years = $stmt->fetchAll(PDO::FETCH_NUM);
+    foreach ($years as $year) {
+      //retrieve amounts translated to days time
+      //holidays
+      $stmt = $db->prepare("
+        SELECT SUM(duration)/".WORKDAY_DURATION." FROM time_log
+        WHERE user_id = ? AND task_id = 2 AND YEAR(day) = ? AND saved
+      ");
+      $stmt->execute(array($_SESSION['id'], $year[0]));
+      $amount = $stmt->fetchColumn();
+      if ($amount){
+        $summary[$year[0]][] =
+          array('task' => task_holiday, 'amount' => $amount);
+      }
+      //off_sick
+      $stmt = $db->prepare("
+        SELECT SUM(duration)/".WORKDAY_DURATION." FROM time_log
+        WHERE user_id = ? AND task_id = 3 AND YEAR(day) = ? AND saved
+      ");
+      $stmt->execute(array($_SESSION['id'], $year[0]));
+      $amount = $stmt->fetchColumn();
+      if ($amount) {
+        $summary[$year[0]][] =
+          array('task' => task_off_sick, 'amount' => $amount);
+      }
+      //leave
+      $stmt = $db->prepare("
+        SELECT COUNT(*) FROM time_log
+        WHERE user_id = ? AND task_id = 4 AND YEAR(day) = ? AND saved
+      ");
+      $stmt->execute(array($_SESSION['id'], $year[0]));
+      $amount = $stmt->fetchColumn();
+      if ($amount) {
+        $summary[$year[0]][] =
+          array('task' => task_leave, 'amount' => $amount);
+      }
+    }
+
     //prepare table
-    echo "      <div class=\"three-quarters alpha\">\n";
-    echo "        <div class=\"two-quarters alpha\">\n";
+    echo "      <div class=\"four-quarters alpha\">\n";
+    echo "        <div class=\"three-quarters alpha\">\n";
     echo "          <table>\n";
     echo "            <tr>\n";
     echo "              <th>".day."</th>\n";
@@ -103,8 +173,7 @@ if ($_SESSION['role'] != 'accountant') {
         $duration = '';
       }
       else {
-        $duration = floor($record['duration']).' '.hours.
-          decimalPartToFrac($record['duration']);
+        $duration = getHValue($record['duration']);
       }
       if (getLastRecord($_SESSION['id']) == new DateTime($record['day'],
         new DateTimeZone(TIMEZONE))) {
@@ -115,88 +184,50 @@ if ($_SESSION['role'] != 'accountant') {
         $remove = '';
       }
       echo "            <tr>\n";
-      echo '              <td width="100">'.$record['day']."</td>\n";
-      echo '              <td width="120">'.$duration."</td>\n";
-      echo '              <td width="250">'.$record['task']."</td>\n";
+      echo '              <td width="130">'.$record['day']."</td>\n";
+      echo '              <td width="150">'.$duration."</td>\n";
+      echo '              <td width="350">'.$record['task']."</td>\n";
       echo '              <td width="70" align="right">'.$remove."</td>\n";
       echo "            </tr>\n";
       }
     echo "          </table>\n";
-    echo '          '.implode(' | ', $switcher)."\n";
+    echo '          <div class="switcher">'.implode(' | ', $switcher).
+      "</div>\n";
+
+    $intervals = array(0 => 'week', 1 => 'month', 2 => 'year');
     
-    echo '<br />';
-    echo '<br />';
-    require('include/libraries/array-to-texttable.php');
-    mb_internal_encoding("utf-8");
-    $week = getTimesheetOverview($_SESSION['id'], 'week');
-    $month = getTimesheetOverview($_SESSION['id'], 'month');
-    $year = getTimesheetOverview($_SESSION['id'], 'year');
-    $renderer_week = new ArrayToTextTable($week['tasks']);
-    $renderer_month = new ArrayToTextTable($month['tasks']);
-    $renderer_year = new ArrayToTextTable($year['tasks']);
-    $renderer_week->showHeaders('true');
-    $renderer_month->showHeaders('true');
-    $renderer_year->showHeaders('true');
-    echo "<pre>\n";
-    echo "\n\n";
-    echo 'durant una setmana';
-    echo "\n";
-    $renderer_week->render();
-    echo "\n"."total spent: ".floor($week['total_spent']).' '.
-      hours.decimalPartToFrac($week['total_spent']);;
-    echo "\n\n\n";
-    echo 'durant un mes';
-    echo "\n";
-    $renderer_month->render();
-    echo "\n"."total spent: ".floor($month['total_spent']).' '.
-      hours.decimalPartToFrac($month['total_spent']);;
-    echo "\n\n\n";
-    echo 'durant un any';
-    echo "\n";
-    $renderer_year->render();
-    echo "\n"."total spent: ".floor($year['total_spent']).' '.
-      hours.decimalPartToFrac($year['total_spent']);;
-    echo "\n\n";
-    echo "\n\n";
-    echo "\n\n";
-    echo "\n</pre>\n";
+    foreach ($intervals as $interval) {
+      $tasks = getTimesheetOverview($_SESSION['id'], $interval);
+      if (count($tasks)) {
+        echo '          <h3>'.constant('this_'.$interval)."</h3>\n";
+        echo "          <ul id=\"unsaved-records\">\n";
+        foreach ($tasks['tasks'] as $task) {
+          echo "            <li>".$task['name'].": ".
+            getHValue($task['spent']).
+            //" (".$task['percent'].")</li>\n";
+            "</li>\n";
+        }
+        echo "            <li><b>".total."</b>: ".
+          getHValue($tasks['total_spent'])."</li>\n";
+        echo "          </ul>\n";
+      }
+    }
 
     echo "        </div>\n";
 
-    $year_prev = '';
-    $to_close = false;
-    for ($i = 0; $i < count($rows); $i++) {
-      $to_close = !$to_close;
-      if ($rows[$i]['year'] != $year_prev) {
-        echo "        <div class=\"one-quarter omega box-year\">\n";
-        echo "          <h1>".$rows[$i]['year']."</h1>\n";
-        echo "          <ul>\n";
-        if (LOCALE == 'ca') {
-          echo "            <li>".$rows[$i]['task'].": ".str_replace('.', ',',
-            rtrim($rows[$i]['amount'], '0.'))." ".days."</li>\n";
-        }   
-        else {
-          echo "            <li>".$rows[$i]['task'].": ".
-            rtrim($rows[$i]['amount'], '0.')." ".days."</li>\n";
-        }
+    foreach ($summary as $year_num => $year) {
+      echo "        <div class=\"one-quarter omega box-year\">\n";
+      echo "          <h1>$year_num</h1>\n";
+      echo "          <ul>\n";
+      foreach ($year as $entry) {
+        echo "            <li>".$entry['task'].": ".
+          formatNumberP($entry['amount'], false, true, 1)." ".days."</li>\n";
       }
-      else {
-        if (LOCALE == 'ca') {
-          echo "            <li>".$rows[$i]['task'].": ".str_replace('.', ',',
-            rtrim($rows[$i]['amount'], '0.'))." ".days."</li>\n";
-        }
-        else {
-          echo "            <li>".$rows[$i]['task'].": ".
-            rtrim($rows[$i]['amount'], '0.')." ".days."</li>\n";
-        }
-      }
-      if ($to_close || $i == count($rows)-1) {
-        echo "          </ul>\n";
-        echo "        </div>\n";
-      }
-      $year_prev = $rows[$i]['year'];
+      echo "          </ul>\n";
+      echo "        </div>\n";
     }
   echo "      </div>\n";
+  echo "      <div class=\"clear\"></div>\n";
   }
   else {
     echo '      <h3>'.no_records_yet."</h3>\n";

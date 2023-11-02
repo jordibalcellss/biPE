@@ -44,7 +44,7 @@ function writeLog($filename, $message) {
 function getUserMembership($user_id) {
   //returns an array of group names
   $con = LDAPconnect();
-  $result = ldap_search($con[0],'ou=groups,'.LDAP_TREE,"(cn=*)",
+  $result = ldap_search($con[0],LDAP_GROUP_BASE,"(cn=*)",
     array('cn','memberuid'));
   $entries = ldap_get_entries($con[0],$result);
   ldap_close($con[0]);
@@ -87,7 +87,7 @@ function getRole($user_id) {
 
 function printMenu() {
   //menu items depend on the role
-  $modules_admin = 'log timesheet expenses tasks overview';
+  $modules_admin = 'log timesheet periodic expenses tasks overview';
   $modules_accountant = 'expenses invoicing overview';
   $modules_employee = 'log timesheet expenses';
 
@@ -185,7 +185,7 @@ function getTaskName($task_id, $class = false) {
 function getDurations() {
   //returns an array
   $durations = [];
-  for ($i = 1; $i <= WORKDAY_DURATION/INTERVAL_H; $i++) {
+  for ($i = 1; $i <= (WORKDAY_DURATION + 2)/INTERVAL_H; $i++) {
     $durations[$i-1] = INTERVAL_H*$i;
   } 
   return $durations;
@@ -260,6 +260,21 @@ function isHoliday($day) {
   return false;
 }
 
+function countWorkingDays($year) {
+  //returns an integer
+  $day = new DateTime($year.'-01-01', new DateTimeZone("UTC"));
+  $last = new DateTime($year.'-12-31', new DateTimeZone("UTC"));
+  $count = 0;
+  while ($day <= $last) {
+    $day = $day->modify('+1 day');
+    if ($day->format('D') != 'Sat' && $day->format('D') != 'Sun'
+      && !isHoliday($day)) {
+      $count++;
+    }
+  }
+  return $count;
+}
+
 function getUnsavedRecords($user_id) {
   //returns an array of strings
   $db = new DB();
@@ -299,13 +314,12 @@ function getUnsavedRecords($user_id) {
     else {
       $code = '<span class="code-p">'.$record['code'].'</span> ';
     }
-    $out[] = $code.$record['name'].": ".floor($record['duration']).
-      ' '.hours.decimalPartToFrac($record['duration']).$time_preview;
+    $out[] = $code.$record['name'].": ".getHValue($record['duration']).
+      $time_preview;
     $accumulated += $record['duration'];
   }
   if ($accumulated) {
-    $out[] = '<b>'.total.'</b>: '.floor($accumulated).
-      ' '.hours.decimalPartToFrac($accumulated);
+    $out[] = '<b>'.total.'</b>: '.getHValue($accumulated);
   }
   return $out;
 }
@@ -425,7 +439,7 @@ function getTimesheetOverview($user_id, $interval = 'week') {
   /*
    * prepares formatted non-readonly tasks overview
    * returns an array of arrays
-   * [tasks => [[task, spent, percent], [...]], total_spent ]
+   * [tasks => [[name, spent, percent], [...]], total_spent ]
    */
   $interval = strtoupper($interval);
   $db = new DB();
@@ -433,12 +447,14 @@ function getTimesheetOverview($user_id, $interval = 'week') {
     SELECT
     (CASE
       WHEN tasks.code IS NULL OR tasks.code = '' THEN tasks.name
-      ELSE CONCAT(tasks.code, \" \", tasks.name)
+      ELSE CONCAT('<span class=\"code-p\">', tasks.code,
+      '</span> ', tasks.name)
     END) as task, SUM(duration) as spent
     FROM time_log
     LEFT JOIN tasks
     ON tasks.id = time_log.task_id
-    WHERE time_log.day >= DATE_SUB(NOW(), INTERVAL 1 $interval)
+    WHERE time_log.day >=
+      DATE_SUB(CURDATE(), INTERVAL DAYOF$interval(CURDATE()) DAY)
     AND NOT tasks.readonly AND time_log.saved
     AND time_log.user_id = ?
     GROUP BY time_log.task_id
@@ -446,14 +462,11 @@ function getTimesheetOverview($user_id, $interval = 'week') {
   ");
   $stmt->execute(array($user_id));
   $total_spent = 0;
-  $overview = array(array());
+  $overview = array();
   //iterate result set for total spent
   while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-    //TODO next line formatting needs to be done outside once plain text tables
-    // are removed
-    $spent = floor($row['spent']).' '.hours.decimalPartToFrac($row['spent']);
     $overview['tasks'][] = array(
-      'task' => $row['task'], 'spent' => $row['spent']);
+      'name' => $row['task'], 'spent' => $row['spent']);
     $total_spent = $total_spent + $row['spent'];
   }
   //push percents
@@ -512,9 +525,9 @@ function sortByValue($a, $b) {
   }
 }
 
-function gcd($n,$m) {
+function gcd($n, $m) {
   if ($m > 0) {
-    return gcd($m,$n%$m);
+    return gcd($m, $n%$m);
   }
   else {
     return abs($n);
@@ -526,16 +539,39 @@ function decimalPartToFrac($n) {
   $w = floor($n);
   $d = $n - $w;
   if ($d > 0) {
-    $d_len = strlen((string)$d)-2;
-    $num = ceil($d * pow(10,$d_len));
-    $den = pow(10,$d_len);
-    return ' '.$num / gcd($num,$den).'/'.$den / gcd($num,$den);
+    $d_len = strlen((string)$d) - 2;
+    $num = ceil($d * pow(10, $d_len));
+    $den = pow(10, $d_len);
+    return $num / gcd($num, $den).'/'.$den / gcd($num,$den);
   }
   else {
     return '';
   }
 }
 
+function getHValue($n) {
+  /*
+   * translates into fractional hour reading
+   *
+   * expects a number
+   * returns an string with the integer part and a fraction
+   * if there is a decimal part, otherwise a single integer
+   * (or fraction if less than unity)
+   * appends constant "hours" to the output
+   */
+  if ($n - floor($n)) {
+    if ($n > 1) {
+      return floor($n).' '.hours.' '.decimalPartToFrac($n);
+    }
+    else {
+      return decimalPartToFrac($n).' '.hours;
+    }
+  }
+  else {
+    return floor($n).' '.hours;
+  }
+}
+  
 function checkInputDate($date) {
   /*
    * gets direct user input string (dd*mm*yyyy, with or w/o leading zeros)

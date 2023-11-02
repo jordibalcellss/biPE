@@ -154,14 +154,14 @@ INSERT INTO time_log (user_id, task_id, day, duration, saved) VALUES
 INSERT INTO expenses_reclaim (user_id, task_id, amount, description, nature,
   day, paid_back)
   VALUES
-  ('jordi.bs', 11, 17.86, 'viatge a Lleida km', 'm', '2023-03-01', 0),
-  ('jordi.bs', 11, 12.50, 'dinar a Mataró', 'r', '2023-03-01', 0),
-  ('jordi.bs', 13, 1.71, 'transport eines al polígon', 'm', '2023-03-15', 0),
-  ('jordi.bs', 13, 12.00, 'caixes Eudald', 'r', '2023-06-19', 0),
-  ('jordi.bs', 13, 72.00, 'tubs de silicona', 'r', '2023-06-19', 1),
-  ('jordi.bs', 13, 19.00, 'certificacions Barcelona', 'm', '2023-06-20', 1),
-  ('jordi.bs', 11, 13.90, 'sopar a Mataró', 'r', '2023-06-25', 1),
-  ('jordi.bs', 11, 19.00, 'tornada cotxe', 'm', '2023-06-25', 1);
+  ('jordi.bs', 11, 17.86, 'viatge a Lleida km', 'm', '2023-03-01', 1),
+  ('jordi.bs', 11, 12.50, 'dinar a Mataró', 'r', '2023-03-01', 1),
+  ('jordi.bs', 13, 1.71, 'transport eines al polígon', 'm', '2023-03-15', 1),
+  ('jordi.bs', 13, 12.00, 'caixes Eudald', 'r', '2023-06-19', 1),
+  ('jordi.bs', 13, 72.00, 'tubs de silicona', 'r', '2023-06-19', 0),
+  ('jordi.bs', 13, 19.00, 'certificacions Barcelona', 'm', '2023-06-20', 0),
+  ('jordi.bs', 11, 13.90, 'sopar a Mataró', 'r', '2023-06-25', 0),
+  ('jordi.bs', 11, 19.00, 'tornada cotxe', 'm', '2023-06-25', 0);
   
 INSERT INTO categories (id, name) VALUES
   (1, 'obra nova'),
@@ -177,8 +177,6 @@ INSERT INTO categories (id, name) VALUES
   (11, 'cee + cèdula'),
   (12, 'informes');
 
--- https://web.gencat.cat/ca/actualitat/reportatges/calendarilaboral/
--- calendari-laboral-2023/
 INSERT INTO holidays (month, day, description) VALUES
   (1, 1, 'Cap d\'any'),
   (1, 6, 'Reis'),
@@ -190,5 +188,5 @@ INSERT INTO holidays (month, day, description) VALUES
   (9, 11, 'Diada nacional'),
   (11, 1, 'Vigília dia dels Morts'),
   (12, 8, 'Dogma de Maria'),
-  (25, 12, 'Nadal'),
-  (26, 12, 'Boxing day');
+  (12, 25, 'Nadal'),
+  (12, 26, 'Boxing day');

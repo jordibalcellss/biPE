@@ -38,8 +38,8 @@ else {
 
   $durations = getDurations();
   foreach ($durations as $duration) {
-    echo '          <option value="'.$duration.'">'.floor($duration).' '.
-      hours.decimalPartToFrac($duration)."</option>\n";
+    echo '          <option value="'.$duration.'">'.getHValue($duration).
+      "</option>\n";
   }
   echo "        </select></div>\n";
   echo '        <input name="target" type="hidden" value="'.

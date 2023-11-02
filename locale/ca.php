@@ -18,12 +18,12 @@ define("bulk_log","registra temps en massa");
 define("timesheet","el meu temps");
 define("tasks","projectes");
 define("clients","clients");
-define("client","client");
 define("accounting","comptable");
 define("phases","previsió");
 define("expenses","despeses");
 define("invoicing","facturació");
 define("overview","visió general");
+define("periodic","periòdic");
 
 define("log_task","registra");
 define("log_discard","descarta");
@@ -64,7 +64,9 @@ define("details","detalls");
 define("personal_expenses","despeses personals");
 define("declare_personal_expenses","declara ".personal_expenses);
 define("total","total");
+define("difference","diferència");
 
+define("client","client");
 define("address","adreça");
 define("city","població");
 define("postcode","codi postal");
@@ -134,5 +136,19 @@ fins a 1000 hores cada vegada");
 
 define("bulk_log_excess","admet fins a 999 hores cada volta");
 define("are_now_orphans","són ara orfes");
+
+define("this_week","aquesta setmana");
+define("this_month","aquest mes");
+define("this_year","enguany");
+
+define("periodic_advice","aquesta pàgina mostra el temps que cada treballador
+ha dedicat a projectes (o fora de l'oficina) durant cada any<br /><br />la
+diferència s'obté a partir dels dies feiners, que es calculen restant els caps
+de setmana més 12 dies de festa (l'1 i el 6 de gener, el divendres sant i el
+dilluns de Pasqua, l'1 de maig, el 24 de juny, el 15 d'agost, l'11 de setembre,
+l'1 de novembre i el 8, 25 i 26 de desembre)<br /><br/>per a calcular, en
+hores, aquesta diferència, es fa servir la durada d'un dia, que està
+configurada a ".WORKDAY_DURATION." hores (el mateix es vàlid per la durada de
+baixa)");
 
 ?>

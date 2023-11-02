@@ -25,6 +25,8 @@ define('LDAP_TREE', 'dc=laptop,dc=local');
 define('LDAP_USER', 'cn=ldapadm,'.LDAP_TREE);
 define('LDAP_HOST', 'localhost');
 define('LDAP_PASS', 'testldap');
+define('LDAP_USER_BASE', 'ou=users,'.LDAP_TREE);
+define('LDAP_GROUP_BASE', 'ou=groups,'.LDAP_TREE);
 define('LDAP_AUTH_ADMIN_GROUP', 'tech');
 define('LDAP_AUTH_ACCOUNTANT_GROUP', 'accounts');
 define('LDAP_AUTH_EMPLOYEE_GROUP', 'engineers');

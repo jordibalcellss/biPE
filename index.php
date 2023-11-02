@@ -112,6 +112,9 @@ if (isset($_GET['module'])) {
   else if ($_GET['module'] == 'overview') {
     require('include/overview.php');
   }
+  else if ($_GET['module'] == 'periodic') {
+    require('include/periodic.php');
+  }
   else if ($_GET['module'] == 'test') {
     require('include/test.php');
   }
@@ -120,10 +123,7 @@ else {
   if ($_SESSION['role'] != 'accountant') {
     require('include/log-form.php');
   }
-  else if ($_SESSION['role'] == 'admin') {
-    require('include/tasks.php');
-  }
-  else if ($_SESSION['role'] == 'accountant') {
+  else {
     require('include/invoicing.php');
   }
 }
