@@ -91,8 +91,8 @@ INSERT INTO tasks (id, code, category_id, client_id, name, rate, active,
   (2, null, null, null, null, null, 1, 1), -- holiday
   (3, null, null, null, null, null, 1, 1), -- off sick
   (4, null, null, null, null, null, 1, 1), -- leave
-  (5, null, null, null, null, null, 0, 1), -- reserved
-  (6, null, null, null, null, null, 0, 1), -- reserved
+  (5, null, null, null, null, null, 1, 1), -- off
+  (6, null, null, null, null, null, 1, 1), -- unpaid
   (7, null, null, null, null, null, 0, 1), -- reserved
   (8, null, null, null, null, null, 0, 1), -- reserved
   (9, null, null, null, null, null, 0, 1), -- reserved
@@ -180,8 +180,6 @@ INSERT INTO categories (id, name) VALUES
 INSERT INTO holidays (month, day, description) VALUES
   (1, 1, 'Cap d\'any'),
   (1, 6, 'Reis'),
-  (4, 7, 'Good Friday'),
-  (4, 10, 'Easter Monday'),
   (5, 1, 'Dia del treballador'),
   (6, 24, 'Dia dels Països Catalans'),
   (8, 15, 'Santa Maria'),

@@ -36,6 +36,8 @@ define("task_weekend_nothing","res");
 define("task_holiday","vacances");
 define("task_off_sick","malaltia/metge");
 define("task_leave","baixa");
+define("task_off","personal");
+define("task_unpaid","no cobrat");
 
 define("hours","h");
 define("hours_word","hores");
@@ -45,6 +47,7 @@ define("task","projecte");
 define("in_what","en què");
 define("day","jorn");
 define("days","dies");
+define("days_abbr","d");
 define("duration","temps dedicat");
 define("actions","accions");
 define("remove","esborra");
@@ -65,6 +68,7 @@ define("personal_expenses","despeses personals");
 define("declare_personal_expenses","declara ".personal_expenses);
 define("total","total");
 define("difference","diferència");
+define("overtime","extres");
 
 define("client","client");
 define("address","adreça");
@@ -137,18 +141,25 @@ fins a 1000 hores cada vegada");
 define("bulk_log_excess","admet fins a 999 hores cada volta");
 define("are_now_orphans","són ara orfes");
 
+define("mon","dl");
+define("tue","dt");
+define("wed","dc");
+define("thu","dj");
+define("fri","dv");
+define("week","setmana");
+define("month","mes");
+define("year","any");
 define("this_week","aquesta setmana");
 define("this_month","aquest mes");
 define("this_year","enguany");
+define("weekly_view","vista setmanal +");
 
-define("periodic_advice","aquesta pàgina mostra el temps que cada treballador
-ha dedicat a projectes (o fora de l'oficina) durant cada any<br /><br />la
-diferència s'obté a partir dels dies feiners, que es calculen restant els caps
-de setmana més 12 dies de festa (l'1 i el 6 de gener, el divendres sant i el
-dilluns de Pasqua, l'1 de maig, el 24 de juny, el 15 d'agost, l'11 de setembre,
-l'1 de novembre i el 8, 25 i 26 de desembre)<br /><br/>per a calcular, en
-hores, aquesta diferència, es fa servir la durada d'un dia, que està
-configurada a ".WORKDAY_DURATION." hores (el mateix es vàlid per la durada de
-baixa)");
+define("periodic_advice","aquesta pàgina mostra una taula amb les jornades de
+la setmana actual més resum anual i una altra taula amb el temps que cada
+treballador ha dedicat a projectes (o fora de l'oficina) durant cada any<br />
+<br />els dies feiners es calculen restant els caps de setmana més 12 dies de
+festa (l'1 i el 6 de gener, el divendres sant i el dilluns de Pasqua, l'1 de
+maig, el 24 de juny, el 15 d'agost, l'11 de setembre, l'1 de novembre i el 8,
+25 i 26 de desembre)");
 
 ?>

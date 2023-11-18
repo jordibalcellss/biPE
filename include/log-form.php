@@ -5,7 +5,7 @@ $today = new DateTime(null, new DateTimeZone(TIMEZONE));
 
 //we will display the form once the day is over
 //or wait if target_date sits in the future because of SKIP_WEEKENDS
-if ($target_date->format('Y-m-d') >= $today->format('Y-m-d')) {
+if ($target_date >= $today) {
   echo '      <h3>'.log_not_needed."</h3>\n";
 }
 else {

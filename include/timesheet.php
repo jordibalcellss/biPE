@@ -17,6 +17,8 @@ if ($_SESSION['role'] != 'accountant') {
           WHEN task_id = 2 THEN '".task_holiday."'
           WHEN task_id = 3 THEN '".task_off_sick."'
           WHEN task_id = 4 THEN '".task_leave."'
+          WHEN task_id = 5 THEN '".task_off."'
+          WHEN task_id = 6 THEN '".task_unpaid."'
           ELSE
           CASE
             WHEN tasks.code IS NULL OR tasks.code = '' THEN tasks.name
@@ -85,6 +87,8 @@ if ($_SESSION['role'] != 'accountant') {
       WHEN task_id = 2 THEN '".task_holiday."'
       WHEN task_id = 3 THEN '".task_off_sick."'
       WHEN task_id = 4 THEN '".task_leave."'
+      WHEN task_id = 5 THEN '".task_off."'
+      WHEN task_id = 6 THEN '".task_unpaid."'
       ELSE
       CASE
         WHEN tasks.code IS NULL OR tasks.code = '' THEN tasks.name
@@ -109,10 +113,10 @@ if ($_SESSION['role'] != 'accountant') {
       '</a> - <a href="?module=bulk-log">'.bulk_log."</a></div>\n";
 
     //retrieve details for the right column
-    //years with holidays, off sick or leave records
+    //years with holidays, off sick, leave or off records
     $stmt = $db->prepare("
       SELECT DISTINCT(YEAR(day)) FROM time_log
-      WHERE user_id = ? AND task_id < 5 AND task_id != 1 AND saved
+      WHERE user_id = ? AND task_id < 11 AND task_id != 1 AND saved
     ");
     $stmt->execute(array($_SESSION['id']));
     $summary = array();
@@ -121,6 +125,7 @@ if ($_SESSION['role'] != 'accountant') {
     $years = $stmt->fetchAll(PDO::FETCH_NUM);
     foreach ($years as $year) {
       //retrieve amounts translated to days time
+      
       //holidays
       $stmt = $db->prepare("
         SELECT SUM(duration)/".WORKDAY_DURATION." FROM time_log
@@ -132,6 +137,7 @@ if ($_SESSION['role'] != 'accountant') {
         $summary[$year[0]][] =
           array('task' => task_holiday, 'amount' => $amount);
       }
+      
       //off_sick
       $stmt = $db->prepare("
         SELECT SUM(duration)/".WORKDAY_DURATION." FROM time_log
@@ -143,6 +149,7 @@ if ($_SESSION['role'] != 'accountant') {
         $summary[$year[0]][] =
           array('task' => task_off_sick, 'amount' => $amount);
       }
+      
       //leave
       $stmt = $db->prepare("
         SELECT COUNT(*) FROM time_log
@@ -153,6 +160,18 @@ if ($_SESSION['role'] != 'accountant') {
       if ($amount) {
         $summary[$year[0]][] =
           array('task' => task_leave, 'amount' => $amount);
+      }
+      
+      //off
+      $stmt = $db->prepare("
+        SELECT SUM(duration)/".WORKDAY_DURATION." FROM time_log
+        WHERE user_id = ? AND task_id = 5 AND YEAR(day) = ? AND saved
+      ");
+      $stmt->execute(array($_SESSION['id'], $year[0]));
+      $amount = $stmt->fetchColumn();
+      if ($amount) {
+        $summary[$year[0]][] =
+          array('task' => task_off, 'amount' => $amount);
       }
     }
 

@@ -120,7 +120,8 @@ function getTasks($filter) {
   $db = new DB();
   $cond = '';
   if ($filter == 'active') {
-    $cond = 'active';
+    //$cond = 'active';
+    $cond = 'active AND id > 1'; //delete once task_weekend_nothing is removed
   }
   else if ($filter == 'editable') {
     $cond = 'NOT readonly';
@@ -130,10 +131,12 @@ function getTasks($filter) {
   $stmt = $db->prepare("
     SELECT id, code,
     (CASE
-      WHEN id=1 THEN '".task_weekend_nothing."'
-      WHEN id=2 THEN '".task_holiday."'
-      WHEN id=3 THEN '".task_off_sick."'
-      WHEN id=4 THEN '".task_leave."'
+      WHEN id = 1 THEN '".task_weekend_nothing."'
+      WHEN id = 2 THEN '* ".task_holiday."'
+      WHEN id = 3 THEN '* ".task_off_sick."'
+      WHEN id = 4 THEN '* ".task_leave."'
+      WHEN id = 5 THEN '* ".task_off."'
+      WHEN id = 6 THEN '* ".task_unpaid."'
       ELSE SUBSTR(name, 1, 32)
     END) AS name, active FROM tasks WHERE $cond
   ");
@@ -167,16 +170,18 @@ function getTaskName($task_id, $class = false) {
   $stmt = $db->prepare("
     SELECT
     (CASE
-      WHEN id=1 THEN '".task_weekend_nothing."'
-      WHEN id=2 THEN '".task_holiday."'
-      WHEN id=3 THEN '".task_off_sick."'
-      WHEN id=4 THEN '".task_leave."'
+      WHEN id = 1 THEN '".task_weekend_nothing."'
+      WHEN id = 2 THEN '".task_holiday."'
+      WHEN id = 3 THEN '".task_off_sick."'
+      WHEN id = 4 THEN '".task_leave."'
+      WHEN id = 5 THEN '".task_off."'
+      WHEN id = 6 THEN '".task_unpaid."'
       ELSE
       CASE
-        WHEN code IS NULL OR code='' THEN name
+        WHEN code IS NULL OR code = '' THEN name
         ELSE CONCAT('$opening', code, '$closure ', name)
       END
-    END) FROM tasks WHERE id=?
+    END) FROM tasks WHERE id = ?
   ");
   $stmt->execute(array($task_id));
   return $stmt->fetchColumn();
@@ -257,13 +262,21 @@ function isHoliday($day) {
       return true;
     }
   }
+  //holy week
+  $datetime = new DateTime();
+  $easter_sunday = $datetime->setTimestamp(easter_date());
+  if ($day == $easter_sunday->modify('-2 days')
+    || $day == $easter_sunday->modify('+3 days')) {
+    //either good friday or easter monday
+    return true;
+  }
   return false;
 }
 
 function countWorkingDays($year) {
   //returns an integer
-  $day = new DateTime($year.'-01-01', new DateTimeZone("UTC"));
-  $last = new DateTime($year.'-12-31', new DateTimeZone("UTC"));
+  $day = new DateTime($year.'-01-01', new DateTimeZone(TIMEZONE));
+  $last = new DateTime($year.'-12-31', new DateTimeZone(TIMEZONE));
   $count = 0;
   while ($day <= $last) {
     $day = $day->modify('+1 day');
@@ -281,15 +294,17 @@ function getUnsavedRecords($user_id) {
   $stmt = $db->prepare("
     SELECT tasks.id, tasks.code,
     (CASE
-      WHEN tasks.id=1 THEN '".task_weekend_nothing."'
-      WHEN tasks.id=2 THEN '".task_holiday."'
-      WHEN tasks.id=3 THEN '".task_off_sick."'
-      WHEN tasks.id=4 THEN '".task_leave."'
+      WHEN tasks.id = 1 THEN '".task_weekend_nothing."'
+      WHEN tasks.id = 2 THEN '".task_holiday."'
+      WHEN tasks.id = 3 THEN '".task_off_sick."'
+      WHEN tasks.id = 4 THEN '".task_leave."'
+      WHEN tasks.id = 5 THEN '".task_off."'
+      WHEN tasks.id = 6 THEN '".task_unpaid."'
       ELSE tasks.name
     END) AS name, time_log.duration
     FROM time_log LEFT JOIN tasks
     ON tasks.id = time_log.task_id
-    WHERE user_id=? AND NOT saved
+    WHERE user_id = ? AND NOT saved
   ");
   $stmt->execute(array($user_id));
   $records = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -549,7 +564,7 @@ function decimalPartToFrac($n) {
   }
 }
 
-function getHValue($n) {
+function getHValue($n, $hide_zero = false) {
   /*
    * translates into fractional hour reading
    *
@@ -559,16 +574,51 @@ function getHValue($n) {
    * (or fraction if less than unity)
    * appends constant "hours" to the output
    */
+
+  //get the absolute value
+  //and append the sign during return
+  if ($n < 0) {
+    $n = abs($n);
+    $sign = '-';
+  }
+  else {
+    $sign = '';
+  }
+  //has a decimal part
   if ($n - floor($n)) {
     if ($n > 1) {
-      return floor($n).' '.hours.' '.decimalPartToFrac($n);
+      return $sign.floor($n).' '.hours.' '.decimalPartToFrac($n);
     }
     else {
-      return decimalPartToFrac($n).' '.hours;
+      return $sign.decimalPartToFrac($n).' '.hours;
     }
   }
   else {
-    return floor($n).' '.hours;
+    if (floor($n)) {
+      return $sign.floor($n).' '.hours;
+    }
+    else {
+      if ($hide_zero) {
+        return '';
+      }
+      else {
+        return $sign.floor($n).' '.hours;
+      }
+    }
+  }
+}
+
+function getDValue($n) {
+  /*
+   * returns an string with $n rounded to a single decimal
+   * if $n is not null, otherwise an empty string
+   * appends constant "days_abbr" to the output
+   */
+  if ($n == 0) {
+    return '';
+  }
+  else {
+    return formatNumberP($n, false, true, 1)." ".days_abbr;
   }
 }
   
