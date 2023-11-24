@@ -18,12 +18,12 @@ div.not-editable-form-item { color: #888; }
 
 span.greyed-out, p.advice { color: #888; }
 
-span.code-p, span.code-h3 {
+span.code-p, span.code-h2 {
   border: 1px #777 solid;
   background: #ddd;
 }
 
-span.code-h3 {
+span.code-h2 {
   border: 1px #777 solid;
 }
 

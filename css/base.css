@@ -43,14 +43,15 @@ form#expenses-filter input, select { margin-right: 14px; }
 form#expenses-filter input[type="checkbox"] { margin-right: 7px; }
 form#expenses-filter input[type="submit"] { margin-left: 14px; }
 
+form.on-top, p.margin-bot { margin-bottom: 35px; }
+
 div.not-editable-form-item { margin-bottom: 11px; }
 
-ul#unsaved-records { margin: 16px 0; list-style-type: none; }
-ul#unsaved-records li { margin-bottom: 8px; }
-ul#unsaved-records li:before { content: "→ "; }
+ul#arrow-listings { margin: 16px 0; list-style-type: none; }
+ul#arrow-listings li { margin-bottom: 8px; }
+ul#arrow-listings li:before { content: "→ "; }
 
 div#sec-menu { margin-bottom: 35px; }
-div#under-sec-menu-messages { margin-bottom: 27px; }
 
 h2, h3, h4 { margin-bottom: 18px; }
 h2 { font-size: 21px; }
@@ -69,7 +70,7 @@ span.code-p {
   font-size: 13px;
 }
 
-span.code-h3 {
+span.code-h2 {
   padding: 2px 6px 2px 6px;
   margin-right: 3px;
   border-radius: 3px;
@@ -95,7 +96,7 @@ table div.lamp {
 
 div.switcher { padding-bottom: 35px; }
 
-p.advice { line-height: 1.3em; }
+p { line-height: 1.3em; }
 
 div#trunk {
   width: 1190px;

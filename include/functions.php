@@ -87,7 +87,7 @@ function getRole($user_id) {
 
 function printMenu() {
   //menu items depend on the role
-  $modules_admin = 'log timesheet periodic expenses tasks overview';
+  $modules_admin = 'log timesheet periodic expenses invoicing tasks overview';
   $modules_accountant = 'expenses invoicing overview';
   $modules_employee = 'log timesheet expenses';
 
@@ -120,18 +120,19 @@ function getTasks($filter) {
   $db = new DB();
   $cond = '';
   if ($filter == 'active') {
-    //$cond = 'active';
-    $cond = 'active AND id > 1'; //delete once task_weekend_nothing is removed
+    //not displaying task_nothing
+    $cond = 'active AND id > 1';
   }
   else if ($filter == 'editable') {
     $cond = 'NOT readonly';
   }
   $cond = $cond.' ORDER BY code DESC, name ASC, id DESC';
 
+  //FIXME: we do not want to extract substrings here
   $stmt = $db->prepare("
     SELECT id, code,
     (CASE
-      WHEN id = 1 THEN '".task_weekend_nothing."'
+      WHEN id = 1 THEN '".task_nothing."'
       WHEN id = 2 THEN '* ".task_holiday."'
       WHEN id = 3 THEN '* ".task_off_sick."'
       WHEN id = 4 THEN '* ".task_leave."'
@@ -170,7 +171,7 @@ function getTaskName($task_id, $class = false) {
   $stmt = $db->prepare("
     SELECT
     (CASE
-      WHEN id = 1 THEN '".task_weekend_nothing."'
+      WHEN id = 1 THEN '".task_nothing."'
       WHEN id = 2 THEN '".task_holiday."'
       WHEN id = 3 THEN '".task_off_sick."'
       WHEN id = 4 THEN '".task_leave."'
@@ -294,7 +295,7 @@ function getUnsavedRecords($user_id) {
   $stmt = $db->prepare("
     SELECT tasks.id, tasks.code,
     (CASE
-      WHEN tasks.id = 1 THEN '".task_weekend_nothing."'
+      WHEN tasks.id = 1 THEN '".task_nothing."'
       WHEN tasks.id = 2 THEN '".task_holiday."'
       WHEN tasks.id = 3 THEN '".task_off_sick."'
       WHEN tasks.id = 4 THEN '".task_leave."'
@@ -407,7 +408,7 @@ function getClientDetails($client_id) {
    * the empty attributes are not returned
    */
   $db = new DB();
-  $stmt = $db->prepare('SELECT * FROM clients WHERE id=?');
+  $stmt = $db->prepare('SELECT * FROM clients WHERE id = ?');
   $stmt->execute(array($client_id));
   $row = $stmt->fetch(PDO::FETCH_ASSOC);
   $client = [];
@@ -428,26 +429,27 @@ function getClientDetails($client_id) {
 }
 
 function getTasksFromClient($client_id) {
-  //returns an array of formatted task codes
+  //returns an array of formatted task names
   $db = new DB();
-  $stmt = $db->prepare("SELECT
+  $stmt = $db->prepare("
+    SELECT
     (CASE
-      WHEN code=''
-      THEN '<span class=\"code-p\">----</span>'
-      ELSE CONCAT('<span class=\"code-p\">', code, '</span>')
-    END) AS code
+      WHEN tasks.code IS NULL OR tasks.code = '' THEN tasks.name
+      ELSE CONCAT('<span class=\"code-p\">', tasks.code,
+      '</span> ', tasks.name)
+    END) AS task
     FROM tasks
     LEFT JOIN clients
     ON clients.id = tasks.client_id
-    WHERE client_id=?
-    ORDER BY code DESC
+    WHERE client_id = ?
+    ORDER BY code DESC, tasks.name ASC, tasks.id DESC
   ");
   $stmt->execute(array($client_id));
-  $codes = [];
+  $tasks = [];
   while ($row = $stmt->fetch()) {
-    $codes[] = $row['code'];
+    $tasks[] = $row['task'];
   }
-  return $codes;
+  return $tasks;
 }
 
 function getTimesheetOverview($user_id, $interval = 'week') {

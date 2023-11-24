@@ -3,94 +3,93 @@
 $db = new DB();
 
 if ($_SESSION['role'] == 'accountant') {
-  if (isset($_GET)) {
-    if (isset($_GET['action'])) {
-      if ($_GET['action'] == 'paid' || $_GET['action'] == 'unpaid') {
-        if (isset($_GET['id'])) {
-          $stmt = $db->prepare('
-            UPDATE expenses_reclaim SET paid_back = ? WHERE id = ?');
-          if ($_GET['action'] == 'paid') {
-            $stmt->execute(array(1, $_GET['id']));
-          }
-          else if ($_GET['action'] == 'unpaid') {
-            $stmt->execute(array(0, $_GET['id']));
-          }
-        }
-      }
-      else if ($_GET['action'] == 'export') {
-        ob_clean();
-        $stmt = $db->prepare("
-          SELECT DATE_FORMAT(day,'%d-%m-%Y') AS day,
-          (CASE
-            WHEN tasks.code IS NULL OR tasks.code = '' THEN tasks.name
-            ELSE CONCAT(tasks.code, \" \", tasks.name)
-          END) AS task, expenses_reclaim.id, amount, description,
-          (CASE
-            WHEN nature = 'm' THEN '".mileage."'
-            WHEN nature = 'r' THEN '".receipt."'
-          END) AS nature, paid_back, user_id
-          FROM expenses_reclaim LEFT JOIN tasks
-          ON tasks.id = expenses_reclaim.task_id
-          WHERE day BETWEEN ? AND ? AND paid_back LIKE ? AND user_id LIKE ?
-          ORDER BY expenses_reclaim.id DESC
-        ");
-        $stmt->execute(array($_GET['day_from'], $_GET['day_to'],
-          '%'.$_GET['paid_back'], '%'.$_GET['user_id']));
-        $records = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        header('Content-type: text/csv');
-        header('Content-Disposition: attachment; filename='.str_replace(
-          ' ', '_', personal_expenses).'_'.
-          bin2hex(openssl_random_pseudo_bytes(2)).'.csv');
-      
-        foreach ($records as $record) {
-          echo $record['user_id'].';'.$record['day'].';'.$record['task'].';'.
-            $record['description'].';'.formatNumberP($record['amount']).';'.
-            $record['nature'].';'.$record['paid_back']."\n";
+  if (isset($_GET['action'])) {
+    if ($_GET['action'] == 'paid' || $_GET['action'] == 'unpaid') {
+      if (isset($_GET['id'])) {
+        $stmt = $db->prepare('
+          UPDATE expenses_reclaim SET paid_back = ? WHERE id = ?');
+        if ($_GET['action'] == 'paid') {
+          $stmt->execute(array(1, $_GET['id']));
         }
-        exit;
+        else if ($_GET['action'] == 'unpaid') {
+          $stmt->execute(array(0, $_GET['id']));
+        }
       }
     }
-    if (isset($_GET['submit'])) {
-      //filter params sent
-      if (strlen(trim($_GET['day_from'])) != 0) {
-        if (!checkInputDate($_GET['day_from'])) {
-          $day_from = '1970-01-01';
-        }
-        else {
-          $day_from = checkInputDate($_GET['day_from']);
-        }
+    else if ($_GET['action'] == 'export') {
+      ob_clean();
+      $stmt = $db->prepare("
+        SELECT DATE_FORMAT(day,'%d-%m-%Y') AS day,
+        (CASE
+          WHEN tasks.code IS NULL OR tasks.code = '' THEN tasks.name
+          ELSE CONCAT(tasks.code, \" \", tasks.name)
+        END) AS task, expenses_reclaim.id, amount, description,
+        (CASE
+          WHEN nature = 'm' THEN '".mileage."'
+          WHEN nature = 'r' THEN '".receipt."'
+        END) AS nature, paid_back, user_id
+        FROM expenses_reclaim LEFT JOIN tasks
+        ON tasks.id = expenses_reclaim.task_id
+        WHERE day BETWEEN ? AND ? AND paid_back LIKE ? AND user_id LIKE ?
+        ORDER BY expenses_reclaim.id DESC
+      ");
+      $stmt->execute(array($_GET['day_from'], $_GET['day_to'],
+        '%'.$_GET['paid_back'], '%'.$_GET['user_id']));
+      $records = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+      header('Content-type: text/csv');
+      header('Content-Disposition: attachment; filename='.str_replace(
+        ' ', '_', personal_expenses).'_'.
+        bin2hex(openssl_random_pseudo_bytes(2)).'.csv');
+      
+      foreach ($records as $record) {
+        echo $record['user_id'].';'.$record['day'].';'.$record['task'].';'.
+          $record['description'].';'.formatNumberP($record['amount']).';'.
+          $record['nature'].';'.$record['paid_back']."\n";
       }
-      else {
+      exit;
+    }
+  }
+  if (isset($_GET['submit'])) {
+    //filter params sent
+    if (strlen(trim($_GET['day_from'])) != 0) {
+      if (!checkInputDate($_GET['day_from'])) {
         $day_from = '1970-01-01';
       }
-      if (strlen(trim($_GET['day_to'])) != 0) {
-        if (!checkInputDate($_GET['day_to'])) {
-          $day = new DateTime(null, new DateTimeZone(TIMEZONE));
-          $day_to = $day->format('Y-m-d');
-        }
-        else {
-          $day_to = checkInputDate($_GET['day_to']);
-        }
-      }
       else {
+        $day_from = checkInputDate($_GET['day_from']);
+      }
+    }
+    else {
+      $day_from = '1970-01-01';
+    }
+    if (strlen(trim($_GET['day_to'])) != 0) {
+      if (!checkInputDate($_GET['day_to'])) {
         $day = new DateTime(null, new DateTimeZone(TIMEZONE));
         $day_to = $day->format('Y-m-d');
       }
-      $paid_back = $_GET['paid_back'];
-      $user_id = $_GET['user_id'];
+      else {
+        $day_to = checkInputDate($_GET['day_to']);
+      }
     }
     else {
-      //default params
-      $day_from = '1970-01-01';
       $day = new DateTime(null, new DateTimeZone(TIMEZONE));
       $day_to = $day->format('Y-m-d');
-      $paid_back = '';
-      $user_id = '';
     }
-    $filter_params = "&user_id=$user_id&day_from=$day_from&day_to=$day_to".
-      "&paid_back=$paid_back&submit=filtra";
+    $paid_back = $_GET['paid_back'];
+    $user_id = $_GET['user_id'];
   }
+  else {
+    //default params
+    $day_from = '1970-01-01';
+    $day = new DateTime(null, new DateTimeZone(TIMEZONE));
+    $day_to = $day->format('Y-m-d');
+    $paid_back = '';
+    $user_id = '';
+  }
+  $filter_params = "&user_id=$user_id&day_from=$day_from&day_to=$day_to".
+    "&paid_back=$paid_back&submit=".filter;
   
   //prepare pagination
   if (!isset($_GET['page'])) {
@@ -99,6 +98,7 @@ if ($_SESSION['role'] == 'accountant') {
   else {
     $page = $_GET['page'];
   }
+
   $stmt = $db->prepare("SELECT COUNT(*) FROM expenses_reclaim WHERE day BETWEEN
     ? AND ? AND paid_back LIKE ? AND user_id LIKE ?");
   $stmt->execute(array($day_from, $day_to, '%'.$paid_back, '%'.$user_id));
@@ -175,7 +175,7 @@ if ($_SESSION['role'] == 'accountant') {
     filter."\" />\n";
   echo '          <input name="reset" type="button" value="'.
     clear.
-    "\" onclick=\"window.location.href='index.php?module=expenses';\"/>\n";
+    "\" onclick=\"window.location.href='index.php?module=expenses';\" />\n";
   echo '          <input name="export" type="button" value="'.
     export_csv.
     "\" onclick=\"window.location.href='index.php?module=expenses".

@@ -10,7 +10,7 @@ define('TIMEZONE', 'Europe/Andorra');
 define('WORKDAY_DURATION', 8);
 define('INTERVAL_H', '0.25');
 define('SKIP_WEEKENDS_HOLIDAYS', true);
-define('RECORDS_PAGE', 15);
+define('RECORDS_PAGE', 3);
 define('MILEAGE_RATE', 0.19);
 
 //MariaDB

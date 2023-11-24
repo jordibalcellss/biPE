@@ -2,12 +2,11 @@
 
 if ($_GET['action'] == 'edit') {
   $action = edit;
-  $db = new DB();
   if ($_GET['type'] == 'quotation') {
-    $stmt = $db->prepare('SELECT task_id FROM quotations where id=?');
+    $stmt = $db->prepare('SELECT task_id FROM quotations where id = ?');
   }
   else {
-    $stmt = $db->prepare('SELECT task_id FROM invoices where id=?');
+    $stmt = $db->prepare('SELECT task_id FROM invoices where id = ?');
   }
   $stmt->execute(array($_GET['id']));
   $task_id = $stmt->fetchColumn();
@@ -36,11 +35,10 @@ if ($_POST) {
   if (!count($err)) {
     $amount = formatNumberR(trim($_POST['amount']));
     $day = checkInputDate($_POST['day']);
-    $db = new DB();
     if ($_GET['type'] == 'quotation') {
       if ($_GET['action'] == 'edit') {
-        $stmt = $db->prepare('UPDATE quotations SET description=?, amount=?,
-          nature=?, day=? WHERE id=?');
+        $stmt = $db->prepare('UPDATE quotations SET description = ?,
+          amount = ?, nature = ?, day = ? WHERE id = ?');
         $stmt->execute(array(trim($_POST['description']), $amount,
           $_POST['nature'], $day, $_GET['id']));
       }
@@ -64,9 +62,13 @@ if ($_POST) {
       else {
         $sent = 1;
       }
+      //forcefully mark as sent if settled
+      if ($settled) {
+        $sent = 1;
+      }
       if ($_GET['action'] == 'edit') {
-        $stmt = $db->prepare('UPDATE invoices SET description=?, amount=?,
-          sent=?, settled=?, nature=?, day=? WHERE id=?');
+        $stmt = $db->prepare('UPDATE invoices SET description = ?, amount = ?,
+          sent = ?, settled = ?, nature = ?, day = ? WHERE id = ?');
         $stmt->execute(array(trim($_POST['description']), $amount, $sent,
           $settled, $_POST['nature'], $day, $_GET['id']));
       }
@@ -78,38 +80,39 @@ if ($_POST) {
       }
     }
     if ($stmt->rowCount() == 1) {
-      $err[] = edit_success.' - <a href="index.php?module=accounting&action=list&id='.$task_id.'">'.back.'</a>';
+      $err[] = edit_success.
+        ' - <a href="index.php?module=accounting&action=list&id='.
+        $task_id.'">'.back.'</a>';
     }
   }
 }
 
 if ($_GET['action'] == 'edit') {
-  $db = new DB();
   if ($_GET['type'] == 'quotation') {
-    $stmt = $db->prepare('SELECT * FROM quotations WHERE id=?');
+    $stmt = $db->prepare('SELECT * FROM quotations WHERE id = ?');
   }
   else {
-    $stmt = $db->prepare('SELECT * FROM invoices WHERE id=?');
+    $stmt = $db->prepare('SELECT * FROM invoices WHERE id = ?');
   }
   $stmt->execute(array($_GET['id']));
   $document = $stmt->fetch(PDO::FETCH_NUM);
   $id = $document[0];
-  $amount = formatNumberP($document[2]);
+  $amount = formatNumberP($document[4]);
   if ($_GET['type'] == 'invoice') {
-    if ($document[6] == 1) {
+    if ($document[8] == 1) {
       $sent_checked = ' checked';
     }
     else {
       $sent_checked = '';
     }
-    if ($document[7] == 1) {
+    if ($document[9] == 1) {
       $settled_checked = ' checked';
     }
     else {
       $settled_checked = '';
     }
   }
-  if ($document[4] == 'i') {
+  if ($document[6] == 'i') {
     $income_selected = ' selected';
     $expense_selected = '';
   }
@@ -117,7 +120,7 @@ if ($_GET['action'] == 'edit') {
     $income_selected = '';
     $expense_selected = ' selected';
   }
-  $day = new DateTime($document[5], new DateTimeZone(TIMEZONE));
+  $day = new DateTime($document[7], new DateTimeZone(TIMEZONE));
 }
 else {
   $action = add;
@@ -134,9 +137,8 @@ else {
 }
 
 ?>
-      <h2><?=accounting?></h2>
-      <h3><?=getTaskName($task_id, 'h3')?></h3>
-      <h4><?=$action?> <?=$type?></h4>
+      <h2><?=getTaskName($task_id, 'h2')?></h2>
+      <h3><?=$action?> <?=$type?></h3>
       <form id="accounting" enctype="application/x-www-form-urlencoded"
         method="post" action="index.php?module=accounting&action=<?=$_GET['action']?>&id=<?=$id?>&type=<?=$_GET['type']?>">
 
@@ -148,7 +150,7 @@ else {
 
         <div><label for="description"><?=description?></label></div>
         <div><input name="description" type="text" class="long"
-          value="<?=$document[3]?>" /></div>
+          value="<?=$document[5]?>" /></div>
 
         <div><label for="day"><?=date?>*</label></div>
         <div><input name="day" type="text" class="shorter"

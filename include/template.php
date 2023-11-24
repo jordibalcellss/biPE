@@ -1,10 +1,10 @@
 <?php
 
-$db = new DB();
-
 if ($_SESSION['role'] != 'accountant') {
   
   echo '      <h2>'.periodic."</h2>\n";
+
+  $db = new DB();
 
   echo "      <div class=\"four-quarters\">\n";
   echo "        <div class=\"three-quarters alpha\">\n";

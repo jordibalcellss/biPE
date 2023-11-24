@@ -1,6 +1,6 @@
 <?php
 
-echo "      <h2>".getTaskName($_GET['id'], 'h3')."</h2>\n";
+echo "      <h2>".getTaskName($_GET['id'], 'h2')."</h2>\n";
 
 $db = new DB();
 

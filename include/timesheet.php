@@ -13,7 +13,7 @@ if ($_SESSION['role'] != 'accountant') {
       $stmt = $db->prepare("    
         SELECT DATE_FORMAT(day,'%d-%m-%Y') AS day,
         (CASE
-          WHEN task_id = 1 THEN '".task_weekend_nothing."'
+          WHEN task_id = 1 THEN '".task_nothing."'
           WHEN task_id = 2 THEN '".task_holiday."'
           WHEN task_id = 3 THEN '".task_off_sick."'
           WHEN task_id = 4 THEN '".task_leave."'
@@ -83,7 +83,7 @@ if ($_SESSION['role'] != 'accountant') {
   $stmt = $db->prepare("
     SELECT DATE_FORMAT(day,'%d-%m-%Y') AS day,
     (CASE
-      WHEN task_id = 1 THEN '".task_weekend_nothing."'
+      WHEN task_id = 1 THEN '".task_nothing."'
       WHEN task_id = 2 THEN '".task_holiday."'
       WHEN task_id = 3 THEN '".task_off_sick."'
       WHEN task_id = 4 THEN '".task_leave."'
@@ -219,7 +219,7 @@ if ($_SESSION['role'] != 'accountant') {
       $tasks = getTimesheetOverview($_SESSION['id'], $interval);
       if (count($tasks)) {
         echo '          <h3>'.constant('this_'.$interval)."</h3>\n";
-        echo "          <ul id=\"unsaved-records\">\n";
+        echo "          <ul id=\"arrow-listings\">\n";
         foreach ($tasks['tasks'] as $task) {
           echo "            <li>".$task['name'].": ".
             getHValue($task['spent']).

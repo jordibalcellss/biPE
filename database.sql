@@ -18,22 +18,28 @@ CREATE TABLE IF NOT EXISTS tasks (
 CREATE TABLE IF NOT EXISTS quotations (
   id INT NOT NULL AUTO_INCREMENT,
   task_id INT NOT NULL,
+  acc_id VARCHAR(10), -- accounting id
+  file_id CHAR(8), -- uploaded file name
   amount DECIMAL(8, 2) NOT NULL,
   description VARCHAR(50),
   nature ENUM('i', 'e'), -- income/expense
   day DATE NOT NULL,
+  UNIQUE (file_id),
   PRIMARY KEY (id)
 );
 
 CREATE TABLE IF NOT EXISTS invoices (
   id INT NOT NULL AUTO_INCREMENT,
   task_id INT NOT NULL,
+  acc_id VARCHAR(10),
+  file_id CHAR(8),
   amount DECIMAL(8, 2) NOT NULL,
   description VARCHAR(50),
   nature ENUM('i', 'e'),
   day DATE NOT NULL,
   sent TINYINT(1) DEFAULT 0,
   settled TINYINT(1) DEFAULT 0,
+  UNIQUE (file_id),
   PRIMARY KEY (id)
 );
 
@@ -87,7 +93,7 @@ CREATE TABLE IF NOT EXISTS expenses_reclaim (
 
 INSERT INTO tasks (id, code, category_id, client_id, name, rate, active, 
   readonly) VALUES
-  (1, null, null, null, null, null, 1, 1), -- weekend/nothing
+  (1, null, null, null, null, null, 1, 1), -- nothing
   (2, null, null, null, null, null, 1, 1), -- holiday
   (3, null, null, null, null, null, 1, 1), -- off sick
   (4, null, null, null, null, null, 1, 1), -- leave
@@ -109,14 +115,15 @@ INSERT INTO quotations (task_id, amount, description, nature, day) VALUES
   (13, 3000.00, 'pressupost P2207', 'i', '2022-12-24'),
   (13, 175.00, 'pressupost lloguer grua', 'e', '2023-01-11');
 
-INSERT INTO invoices (task_id, amount, description, settled, nature, day)
-  VALUES
+INSERT INTO invoices (task_id, amount, description, settled, nature, day,
+  acc_id) VALUES
   (11, 40000.00, 'provisió de fons H2201: factura F2207', 1, 'i',
-    '2022-01-02'),
-  (12, 120.00, 'factura F2215', 0, 'i', '2023-01-29'),
-  (13, 750.00, 'provisió de fons P2207: factura F2212', 1, 'i', '2022-12-27'),
-  (13, 1125.00, 'factura 1/2 de P2207: F2213', 0, 'i', '2023-01-29'),
-  (13, 200.00, 'lloguer grua', 0, 'e', '2023-02-15');
+    '2022-01-02','F2207'),
+  (12, 120.00, 'factura F2215', 0, 'i', '2023-01-29','F2215'),
+  (13, 750.00, 'provisió de fons P2207: factura F2212', 1, 'i',
+    '2022-12-27','F2212'),
+  (13, 1125.00, 'factura 1/2 de P2207: F2213', 0, 'i', '2023-01-29','F2213'),
+  (13, 200.00, 'lloguer grua', 0, 'e', '2023-02-15','');
 
 INSERT INTO clients (name, address, city, postcode, vat_code, email) VALUES
   ('Desenvolupaments Pons', '11 Ronda Pedrolo',
@@ -149,7 +156,8 @@ INSERT INTO time_log (user_id, task_id, day, duration, saved) VALUES
   ('jordi.bs', 13, '2023-08-25', 8, 1),
   ('jordi.bs', 4, '2023-08-26', null, 1),
   ('jordi.bs', 4, '2023-08-27', null, 1),
-  ('jordi.bs', 4, '2023-08-28', null, 1);
+  ('jordi.bs', 4, '2023-08-28', null, 1),
+  ('jordi.bs', 13, '2023-11-23', 8, 1);
 
 INSERT INTO expenses_reclaim (user_id, task_id, amount, description, nature,
   day, paid_back)

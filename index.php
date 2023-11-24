@@ -44,84 +44,11 @@ require 'include/template/head.php';
 $err = [];
 
 if (isset($_GET['module'])) {
-  if ($_GET['module'] == 'log' && $_SESSION['role'] != 'accountant') {
-    if ($_POST) {
-      require('include/log.php');
-      require('include/log-form.php');
-    }
-    else {
-      require('include/log-form.php');
-    }
-  }
-  else if ($_GET['module'] == 'timesheet')
-  {
-    require('include/timesheet.php');
-  }
-  else if ($_GET['module'] == 'tasks' && $_SESSION['role'] == 'admin') {
-    if (isset($_GET['action'])) {
-      if ($_GET['action'] == 'edit') {
-        require('include/tasks-form.php');
-      }
-      else if ($_GET['action'] == 'status') {
-        require('include/status.php');
-      }
-    }
-    else {
-      require('include/tasks.php');
-    }
-  }
-  if ($_GET['module'] == 'bulk-log' && $_SESSION['role'] != 'accountant') {
-    require('include/bulk-log.php');
-  }
-  else if ($_GET['module'] == 'accounting'
-    && $_SESSION['role'] != 'employee') {
-    if (isset($_GET['action'])) {
-      if ($_GET['action'] == 'list') {
-        require('include/accounting.php');
-      }
-      else if ($_GET['action'] == 'remove') {
-        if (removeAccountingEntry($_GET['id'], $_GET['type'])) {
-          echo '      <div>'.remove_success.
-            ' - <a href="index.php?module=tasks">'.back.'</a></div>'."\n";
-        }
-      }
-      else {
-        require('include/accounting-form.php');
-      }
-    }
-  }
-  else if ($_GET['module'] == 'clients' && $_SESSION['role'] != 'employee') {
-    if (isset($_GET['action'])) {
-      if ($_GET['action'] == 'edit') {
-        require('include/clients-form.php');
-      }
-      else if ($_GET['action'] == 'remove') {
-        require('include/clients.php');
-      }
-    }
-    else {
-      require('include/clients.php');
-    }
-  }
-  else if ($_GET['module'] == 'expenses') {
-    require('include/expenses.php');
-  }
-  else if ($_GET['module'] == 'invoicing') {
-    require('include/invoicing.php');
-  }
-  else if ($_GET['module'] == 'overview') {
-    require('include/overview.php');
-  }
-  else if ($_GET['module'] == 'periodic') {
-    require('include/periodic.php');
-  }
-  else if ($_GET['module'] == 'test') {
-    require('include/test.php');
-  }
+  require('include/'.$_GET['module'].'.php');
 }
 else {
   if ($_SESSION['role'] != 'accountant') {
-    require('include/log-form.php');
+    require('include/log.php');
   }
   else {
     require('include/invoicing.php');

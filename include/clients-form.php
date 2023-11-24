@@ -5,38 +5,28 @@ if ($_POST) {
     $err[] = name_cannot_be_empty;
   }
   else {
-    $db = new DB();
     if ($_GET['id'] != '') {
-      $stmt = $db->prepare('UPDATE clients SET name=?, address=?, city=?,
-        postcode=?, vat_code=?, email=?, phone=? WHERE id=?');
-      $stmt->execute(array( trim($_POST['name']),
-                            trim($_POST['address']),
-                            trim($_POST['city']),
-                            trim($_POST['postcode']),
-                            trim($_POST['vat_code']),
-                            trim($_POST['email']),
-                            trim($_POST['phone']),
-                            $_GET['id'])
+      $stmt = $db->prepare('UPDATE clients SET name = ?, address = ?, city = ?,
+        postcode = ?, vat_code = ?, email = ?, phone = ? WHERE id = ?');
+      $stmt->execute(array(trim($_POST['name']), trim($_POST['address']),
+        trim($_POST['city']), trim($_POST['postcode']),
+        trim($_POST['vat_code']), trim($_POST['email']),
+        trim($_POST['phone']), $_GET['id'])
       );
       if ($stmt->rowCount() == 1) {
-        $err[] = edit_success.' - <a href="index.php?module=clients">'.
-          back.'</a>';
+        $err[] = edit_success;
       }
     }
     else {
       $stmt = $db->prepare('INSERT INTO clients (name, address, city,
         postcode, vat_code, email, phone) VALUES (?, ?, ?, ?, ?, ?, ?)');
-      $stmt->execute(array( trim($_POST['name']),
-                            trim($_POST['address']),
-                            trim($_POST['city']),
-                            trim($_POST['postcode']),
-                            trim($_POST['vat_code']),
-                            trim($_POST['email']),
-                            trim($_POST['phone'])
-      ));
+      $stmt->execute(array(trim($_POST['name']), trim($_POST['address']),
+        trim($_POST['city']), trim($_POST['postcode']),
+        trim($_POST['vat_code']), trim($_POST['email']),
+        trim($_POST['phone']))
+      );
       if ($stmt->rowCount() == 1) {
-        $err[] = add_success.' - <a href="index.php?module=clients">'.
-          back.'</a>';
+        $err[] = add_success;
       }
     }
   }
@@ -45,8 +35,7 @@ if ($_POST) {
 if (isset($_GET['id'])) {
   if ($_GET['id'] != '') {
     $action = edit;
-    $db = new DB();
-    $stmt = $db->prepare('SELECT * FROM clients WHERE id=?');
+    $stmt = $db->prepare('SELECT * FROM clients WHERE id = ?');
     $stmt->execute(array($_GET['id']));
     $client = $stmt->fetch(PDO::FETCH_NUM);
   }
@@ -65,8 +54,11 @@ else {
 }
 
 ?>
-      <h2><?=$action?> <?=client?></h2>
-      <form id="clients" enctype="application/x-www-form-urlencoded" method="post" action="index.php?module=clients&action=edit&id=<?=$client[0]?>">
+      <h3><?=$action?> <?=client?></h3>
+      <form id="clients" class="on-top"
+        enctype="application/x-www-form-urlencoded"
+        method="post"
+        action="index.php?module=clients&action=edit&id=<?=$client[0]?>">
         <div><label for="name"><?=name?>*</label></div>
         <div><input name="name" type="text" class="long"
           value="<?=$client[1]?>" /></div>
@@ -95,6 +87,9 @@ else {
           value="<?=$client[6]?>" /></div>
 
         <input name="submit" type="submit" value="<?=$action?>" />
+
+        <input name="done" type="button" value="<?=done?>"
+          onclick="window.location.href='index.php?module=clients'" />
 <?php
 printMessages($err);
 echo "      </form>\n";

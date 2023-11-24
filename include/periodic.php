@@ -24,19 +24,18 @@ if ($_SESSION['role'] != 'accountant') {
     foreach ($user_ids as $user_id) {
       $period[$i][0] = $user_id[0];
       
-      $last_sunday = new DateTime('last Sunday', new DateTimeZone(TIMEZONE));
-      $today = new DateTime(null, new DateTimeZone(TIMEZONE));
-
       //iterate the current working week
       //and push times on a daily basis
+      $start = new DateTime('last Sunday', new DateTimeZone(TIMEZONE));
+
       $j = 0;
-      while ($last_sunday < $today && $j <= 4) {
+      while ($j <= 4) {
         $stmt = $db->prepare("
           SELECT SUM(duration) FROM time_log
           WHERE user_id = ? AND day = ? AND saved
         ");
         $stmt->execute(array($user_id[0],
-          $last_sunday->modify('+1 day')->format('Y-m-d')));
+          $start->modify('+1 day')->format('Y-m-d')));
         $period[$i][] = $stmt->fetchColumn();
         $j++;
       }
@@ -74,6 +73,7 @@ if ($_SESSION['role'] != 'accountant') {
       $stmt->execute(array($user_id[0]));
       $unpaid = $stmt->fetchColumn();
 
+      $today = new DateTime(null, new DateTimeZone(TIMEZONE));
       $working_h = countWorkingDays($today->format('Y')) * WORKDAY_DURATION;
 
       $period[$i][] = $total - $working_h - $unpaid;
